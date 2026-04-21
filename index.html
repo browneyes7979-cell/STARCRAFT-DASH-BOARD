@@ -8,110 +8,128 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body {
-  font-family: Arial;
-  padding: 10px;
-  background: #f2f2f2;
-}
+body { font-family: Arial; margin:0; background:#f2f2f2; }
 
-h2 { text-align:center; }
+.tabs { display:flex; background:#222; }
+.tabs button {
+  flex:1; padding:12px; color:white; background:#222; border:none;
+}
+.tabs button.active { background:#ff6600; }
+
+.page { display:none; padding:10px; }
+.page.active { display:block; }
 
 .card {
-  background: white;
-  padding: 12px;
-  margin: 10px 0;
-  border-radius: 12px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  background:white; padding:12px; margin:10px 0;
+  border-radius:10px;
 }
 
-button {
-  padding: 10px;
-  width: 100%;
-  border: none;
-  border-radius: 8px;
-  background: #ff6600;
-  color: white;
-  font-weight: bold;
-}
-
-select, input {
-  width: 48%;
-  padding: 8px;
-  margin: 3px 1%;
-}
-
-.flex {
-  display: flex;
-  justify-content: space-between;
-}
-
+button { padding:10px; width:100%; margin-top:5px; }
+select,input { width:48%; padding:8px; margin:2px; }
+.flex { display:flex; justify-content:space-between; }
 </style>
 </head>
 
 <body>
 
-<h2>🔥 스타 대시보드</h2>
-
-<div class="card">
-<h3>경기 입력</h3>
-
-<div class="flex">
-<select id="playerA1"></select>
-<select id="playerA2"></select>
+<!-- 로그인 -->
+<div id="loginBox" class="card">
+  <button onclick="login()">Google 로그인</button>
 </div>
 
-<div class="flex">
-<select id="playerB1"></select>
-<select id="playerB2"></select>
+<div id="app" style="display:none;">
+
+<div class="tabs">
+  <button onclick="showTab(event,'input')" class="active">입력</button>
+  <button onclick="showTab(event,'dashboard')">대시보드</button>
+  <button onclick="showTab(event,'player')">선수</button>
 </div>
 
-<select id="winner">
-  <option value="A">A팀 승</option>
-  <option value="B">B팀 승</option>
-</select>
+<!-- 입력 -->
+<div id="input" class="page active">
+  <div class="card">
+    <h3>경기 입력</h3>
 
-<button onclick="saveGame()">경기 저장</button>
+    <div class="flex">
+      <select id="playerA1"></select>
+      <select id="playerA2"></select>
+    </div>
+
+    <div class="flex">
+      <select id="playerB1"></select>
+      <select id="playerB2"></select>
+    </div>
+
+    <select id="winner">
+      <option value="A">A팀 승</option>
+      <option value="B">B팀 승</option>
+    </select>
+
+    <button onclick="autoBalance()">🤖 자동 팀 밸런스</button>
+    <button onclick="saveGame()">경기 저장</button>
+  </div>
 </div>
 
-<div class="card">
-<h3>선수 추가</h3>
-<input id="newPlayer" placeholder="이름 입력">
-<button onclick="addPlayer()">추가</button>
+<!-- 대시보드 -->
+<div id="dashboard" class="page">
+  <div id="rank"></div>
 </div>
 
-<div class="card">
-<h3>🏆 랭킹 (MMR)</h3>
-<div id="dashboard"></div>
+<!-- 선수 상세 -->
+<div id="player" class="page">
+  <div id="playerDetail"></div>
+  <canvas id="chart"></canvas>
 </div>
 
-<div class="card">
-<h3>📊 승률 변화</h3>
-<canvas id="chart"></canvas>
 </div>
-
-<div class="card">
-<h3>📅 최근 경기</h3>
-<div id="recent"></div>
-</div>
-
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
 <script>
 
+// Firebase 설정
 const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_DOMAIN",
-  databaseURL: "YOUR_DB_URL",
+  apiKey: "AIzaSyDKvEB_SrvDSADbqxX0LTgejksxtLt4G6U",
+  authDomain: "starcraft-dashboard.firebaseapp.com",
+  databaseURL: "https://starcraft-dashboard-default-rtdb.firebaseio.com/",
+  projectId: "starcraft-dashboard"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const auth = firebase.auth();
 
-let players = ["상필","홍길동","김철수","이영희"];
 
-function updateSelects() {
+// 로그인
+function login(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider);
+}
+
+auth.onAuthStateChanged(user=>{
+  if(user){
+    loginBox.style.display="none";
+    app.style.display="block";
+  }
+});
+
+
+// 탭
+function showTab(e,id){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+  e.target.classList.add("active");
+}
+
+
+// 선수
+let players=["상필","홍길동","김철수","이영희"];
+
+function updateSelects(){
   ["playerA1","playerA2","playerB1","playerB2"].forEach(id=>{
     let el=document.getElementById(id);
     el.innerHTML="";
@@ -120,15 +138,10 @@ function updateSelects() {
 }
 updateSelects();
 
-function addPlayer(){
-  let n=document.getElementById("newPlayer").value;
-  if(!n)return;
-  players.push(n);
-  updateSelects();
-}
 
+// 저장
 function saveGame(){
-  const game={
+  db.ref("games").push({
     date:new Date().toLocaleDateString(),
     games:[{
       teams:{
@@ -137,59 +150,46 @@ function saveGame(){
       },
       winner:winner.value
     }]
-  };
-  db.ref("games").push(game);
+  });
 }
 
+
+// 데이터 로드
 db.ref("games").on("value",snap=>{
   let data=[];
   snap.forEach(c=>{
-    let v=c.val();
-    v.key=c.key;
+    let v=c.val(); v.key=c.key;
     data.push(v);
   });
-
-  renderAll(data);
+  render(data);
 });
 
 
-// 🔥 MMR 계산
+// MMR
 function calcMMR(data){
   let mmr={};
-  let K=32;
-
   data.forEach(m=>{
     m.games.forEach(g=>{
-      let A=g.teams.A;
-      let B=g.teams.B;
-
-      A.concat(B).forEach(p=>{
-        if(!mmr[p]) mmr[p]=1000;
-      });
-
-      let avgA=(mmr[A[0]]+mmr[A[1]])/2;
-      let avgB=(mmr[B[0]]+mmr[B[1]])/2;
-
-      let EA=1/(1+Math.pow(10,(avgB-avgA)/400));
-      let EB=1-EA;
+      let all=[...g.teams.A,...g.teams.B];
+      all.forEach(p=>{ if(!mmr[p]) mmr[p]=1000; });
 
       let SA=g.winner==="A"?1:0;
       let SB=1-SA;
 
-      A.forEach(p=> mmr[p]+=K*(SA-EA));
-      B.forEach(p=> mmr[p]+=K*(SB-EB));
+      g.teams.A.forEach(p=>mmr[p]+=20*(SA-0.5));
+      g.teams.B.forEach(p=>mmr[p]+=20*(SB-0.5));
     });
   });
-
   return mmr;
 }
 
 
-// 🔥 렌더 전체
-function renderAll(data){
+// 렌더
+function render(data){
 
-  let stats={};
-  let history={};
+  window.lastData = data;
+
+  let stats={}, history={};
 
   data.forEach(m=>{
     m.games.forEach(g=>{
@@ -199,11 +199,9 @@ function renderAll(data){
           if(!history[p]) history[p]=[];
 
           if(g.winner===t){
-            stats[p].win++;
-            history[p].push(1);
+            stats[p].win++; history[p].push(1);
           }else{
-            stats[p].lose++;
-            history[p].push(0);
+            stats[p].lose++; history[p].push(0);
           }
         });
       });
@@ -214,65 +212,90 @@ function renderAll(data){
 
   let arr=Object.keys(stats).map(p=>{
     let s=stats[p];
-    let rate=s.win/(s.win+s.lose||1);
-    return {p,...s,rate,mmr:mmr[p]||1000};
+    return {p,...s,mmr:mmr[p]};
   });
 
   arr.sort((a,b)=>b.mmr-a.mmr);
 
-  document.getElementById("dashboard").innerHTML=
-    arr.map((x,i)=>`
-      <div class="card">
-      ${i+1}위 ${x.p}<br>
-      MMR: ${x.mmr.toFixed(0)}<br>
-      ${x.win}승 ${x.lose}패 (${(x.rate*100).toFixed(1)}%)
-      </div>
-    `).join("");
+  rank.innerHTML = arr.map(x=>`
+    <div class="card" onclick="showPlayer('${x.p}')">
+      ${x.p}<br>
+      MMR ${x.mmr.toFixed(0)}<br>
+      ${x.win}승 ${x.lose}패
+    </div>
+  `).join("");
 
-  renderChart(history);
-  renderRecent(data);
+  window.globalHistory = history;
 }
 
 
-// 🔥 그래프
-let chart;
-function renderChart(history){
-  let p=Object.keys(history)[0];
-  if(!p)return;
+// 자동 팀 밸런스
+function autoBalance(){
 
-  let h=history[p].slice(-10);
-  let data=h.map((_,i)=>h.slice(0,i+1).reduce((a,b)=>a+b)/ (i+1));
+  let players = [
+    playerA1.value,
+    playerA2.value,
+    playerB1.value,
+    playerB2.value
+  ];
+
+  players = [...new Set(players)];
+  if(players.length<4){
+    alert("서로 다른 4명 필요");
+    return;
+  }
+
+  let mmr = calcMMR(window.lastData||[]);
+  players.forEach(p=>{ if(!mmr[p]) mmr[p]=1000; });
+
+  let comb = [
+    [[players[0],players[1]],[players[2],players[3]]],
+    [[players[0],players[2]],[players[1],players[3]]],
+    [[players[0],players[3]],[players[1],players[2]]]
+  ];
+
+  let best, min=9999;
+
+  comb.forEach(c=>{
+    let A=c[0], B=c[1];
+    let avgA=(mmr[A[0]]+mmr[A[1]])/2;
+    let avgB=(mmr[B[0]]+mmr[B[1]])/2;
+    let diff=Math.abs(avgA-avgB);
+
+    if(diff<min){ min=diff; best=c; }
+  });
+
+  playerA1.value=best[0][0];
+  playerA2.value=best[0][1];
+  playerB1.value=best[1][0];
+  playerB2.value=best[1][1];
+
+  alert("MMR 차이: "+Math.round(min));
+}
+
+
+// 선수 상세
+let chart;
+
+function showPlayer(name){
+
+  showTab({target:document.querySelectorAll(".tabs button")[2]},"player");
+
+  let h = globalHistory[name]||[];
+
+  playerDetail.innerHTML = `<div class="card"><h3>${name}</h3></div>`;
+
+  let data = h.map((_,i)=>h.slice(0,i+1).reduce((a,b)=>a+b)/(i+1));
 
   if(chart) chart.destroy();
 
-  chart=new Chart(document.getElementById("chart"),{
+  chart = new Chart(document.getElementById("chart"),{
     type:"line",
     data:{
       labels:data.map((_,i)=>i+1),
-      datasets:[{label:p,data}]
+      datasets:[{label:name,data}]
     }
   });
-}
-
-
-// 🔥 최근 경기
-function renderRecent(data){
-  data.reverse();
-  document.getElementById("recent").innerHTML=
-    data.map(g=>{
-      let game=g.games[0];
-      return `
-      <div class="card">
-      ${g.date}<br>
-      ${game.teams.A.join(",")} vs ${game.teams.B.join(",")}<br>
-      승리:${game.winner}
-      <button onclick="del('${g.key}')">삭제</button>
-      </div>`;
-    }).join("");
-}
-
-function del(k){
-  db.ref("games/"+k).remove();
 }
 
 </script>
