@@ -46,7 +46,6 @@
   .team-col .tp { background: #fff; padding: 6px 10px; margin: 3px 0; border-radius: 4px;
                   font-size: 13px; }
 
-  /* 칩 기반 팀 배정 */
   .chip-section { padding: 10px; border-radius: 8px; margin: 6px 0; min-height: 50px; }
   .chip-section.none { background: #f7f7f7; border: 1px dashed #ccc; }
   .chip-section.A { background: #e3f2fd; border-left: 4px solid #2980b9; }
@@ -143,14 +142,30 @@
   .club-stat { padding: 10px 12px; background: #fffbe6; border-left: 4px solid #f39c12;
                border-radius: 6px; margin: 6px 0; font-size: 13px; }
   .club-stat .title { font-weight: 700; color: #d68910; margin-bottom: 2px; }
+
+  .hist-item { padding: 10px; margin: 8px 0; background: #fafafa; border-radius: 6px;
+               border-left: 4px solid #ddd; }
+  .hist-item.W { border-left-color: #27ae60; }
+  .hist-item.L { border-left-color: #c0392b; }
+  .hist-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+  .hist-badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; color: #fff; }
+  .hist-badge.W { background: #27ae60; }
+  .hist-badge.L { background: #c0392b; }
+  .hist-teams { font-size: 12px; line-height: 1.6; margin-bottom: 8px; color: #555; }
+  .hist-teams .me { background: #fff3cd; padding: 0 4px; border-radius: 3px; font-weight: 700; color: #222; }
+  .hist-teams .won { color: #27ae60; font-weight: 600; }
+  .hist-btns { display: flex; gap: 6px; }
+  .hist-btns button { padding: 5px 12px; font-size: 12px; width: auto; margin: 0; }
+  .hist-btns .e { background: #3498db; }
+  .hist-btns .d { background: #c0392b; }
+
+  .version { font-size: 10px; color: #aaa; text-align: center; padding: 6px; }
 </style>
 </head>
 <body>
 
 <div id="loginBox" class="card">
   <h3>스타 대시보드</h3>
-
-  <!-- 정상 브라우저일 때 -->
   <div id="normalLogin">
     <p class="muted">Google 계정으로 로그인 후 이용할 수 있습니다.</p>
     <button id="btnLogin">Google 로그인</button>
@@ -158,8 +173,6 @@
     <button id="btnGuest" class="secondary">👤 게스트로 시작</button>
     <p class="muted" style="font-size:11px; margin-top:6px;">구글 로그인이 차단되면 이걸 사용하세요</p>
   </div>
-
-  <!-- 인앱 브라우저 감지 시 -->
   <div id="inappLogin" style="display:none;">
     <div id="inappWarn" class="warn-box"></div>
     <button id="btnGuestInApp" style="background:#27ae60; font-size:15px; padding:14px;">👤 게스트로 바로 시작</button>
@@ -182,7 +195,6 @@
     <button data-tab="rank">랭킹</button>
   </div>
 
-  <!-- 선수관리 -->
   <div id="players" class="page active">
     <div class="card">
       <h3>선수 추가</h3>
@@ -206,16 +218,13 @@
     </div>
   </div>
 
-  <!-- 경기입력 -->
   <div id="game" class="page">
     <div class="card">
       <h3>경기 입력</h3>
-
       <div id="editBanner" class="edit-banner" style="display:none;">
         <div>✏️ <b>경기 수정 중</b> <span class="muted" id="editHint"></span></div>
         <button id="btnCancelEdit">취소</button>
       </div>
-
       <label class="muted">경기 날짜</label>
       <input type="date" id="date">
 
@@ -244,7 +253,6 @@
     </div>
   </div>
 
-  <!-- 랭킹 -->
   <div id="rank" class="page">
     <div class="card">
       <h3>🏆 동호회 통계</h3>
@@ -252,10 +260,12 @@
     </div>
     <div class="card">
       <h3>랭킹 (MMR 기준)</h3>
-      <p class="muted" style="margin:0 0 8px 0;">이름을 누르면 상세 통계가 나옵니다</p>
+      <p class="muted" style="margin:0 0 8px 0;">이름을 누르면 상세 통계 + 경기 기록 수정/삭제</p>
       <div id="rankList"></div>
     </div>
   </div>
+
+  <div class="version">v2026-04-21-D (rebuild) — 이 줄이 안 보이면 구버전입니다</div>
 </div>
 
 <div id="playerModal">
@@ -298,7 +308,7 @@ function toast(msg, err=false) {
   toast._t = setTimeout(()=>t.classList.remove("show"), 2500);
 }
 
-/* ============ 인앱 브라우저 감지 ============ */
+/* 인앱 브라우저 */
 function detectBrowser() {
   const ua = navigator.userAgent;
   return {
@@ -321,7 +331,6 @@ function detectBrowser() {
                 : b.isLine ? "라인" : b.isFB ? "페이스북"
                 : b.isInsta ? "인스타그램" : "앱";
 
-  // 정상 로그인 숨기고 인앱 전용 UI 노출
   $("normalLogin").style.display = "none";
   $("inappLogin").style.display = "block";
 
@@ -359,7 +368,7 @@ function detectBrowser() {
   }
 })();
 
-/* ============ Auth ============ */
+/* Auth */
 $("btnLogin").addEventListener("click", async () => {
   try {
     await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
@@ -411,7 +420,7 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-/* ============ Tabs ============ */
+/* Tabs */
 qsa(".tabs button").forEach(btn => {
   btn.addEventListener("click", () => {
     qsa(".page").forEach(p => p.classList.remove("active"));
@@ -421,11 +430,12 @@ qsa(".tabs button").forEach(btn => {
   });
 });
 
-/* ============ State ============ */
+/* State */
 let players = [];
 let games = [];
-let assign = {};          // {name: "A"|"B"|""}
-let editingGameId = null; // null이면 신규, 아니면 수정 중
+let assign = {};
+let editingGameId = null;
+let currentModalPlayer = null;
 
 $("date").value = new Date().toISOString().split("T")[0];
 $("date").addEventListener("change", renderDayGames);
@@ -452,10 +462,11 @@ function bootData() {
     renderRank();
     renderClubStats();
     renderDayGames();
+    if (currentModalPlayer) openPlayerModal(currentModalPlayer);
   }, err => toast("경기 로딩 실패: " + err.message, true));
 }
 
-/* ============ 선수 추가/삭제 ============ */
+/* 선수 */
 $("btnAddPlayer").addEventListener("click", addPlayer);
 $("newPlayer").addEventListener("keydown", e => { if (e.key === "Enter") addPlayer(); });
 
@@ -503,7 +514,7 @@ function deletePlayer(id, name) {
     .catch(err => toast("삭제 실패: " + err.message, true));
 }
 
-/* ============ 팀 구성 도우미 ============ */
+/* 팀 구성 도우미 */
 function renderHelperSelect() {
   if (!players.length) {
     $("helperSelect").innerHTML = '<div class="empty">먼저 선수를 등록하세요</div>';
@@ -551,7 +562,7 @@ function buildHelperTeams(mode) {
   `;
 }
 
-/* ============ 경기 입력 - 칩 UI ============ */
+/* 칩 배정 */
 function renderAssignChips() {
   if (!players.length) {
     $("assignList").innerHTML = '<div class="empty">먼저 선수를 등록하세요</div>';
@@ -582,7 +593,7 @@ function renderAssignChips() {
     <div class="chip-section A">
       <h5>A팀 (${A.length}명)</h5>
       <div class="chips ${A.length?"":"empty"}">
-        ${A.length ? A.map(n => chipHtml(n, "A")).join("") : "여기로 옮길 선수를 미참여에서 눌러주세요"}
+        ${A.length ? A.map(n => chipHtml(n, "A")).join("") : "미참여에서 이름을 눌러 옮겨주세요"}
       </div>
     </div>
     <div class="chip-section B">
@@ -597,7 +608,6 @@ function renderAssignChips() {
     c.addEventListener("click", () => {
       const name = c.dataset.name;
       const cur = assign[name] || "";
-      // 순환: 미참여 → A → B → 미참여
       const next = cur === "" ? "A" : cur === "A" ? "B" : "";
       assign[name] = next;
       renderAssignChips();
@@ -638,7 +648,6 @@ $("btnSwapTeams").addEventListener("click", () => {
 
 $("btnCopyLast").addEventListener("click", () => {
   const d = $("date").value;
-  // 이 날의 가장 최근 경기를 복사
   const list = games.filter(g => g.date === d && g.id !== editingGameId)
     .sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
   if (!list.length) return toast("이 날 복사할 경기가 없습니다", true);
@@ -650,7 +659,7 @@ $("btnCopyLast").addEventListener("click", () => {
   toast("직전 경기 배정을 복사했어요");
 });
 
-/* ============ 수정 모드 ============ */
+/* 수정 모드 */
 function startEditGame(gameId) {
   const g = games.find(x => x.id === gameId);
   if (!g) return;
@@ -662,7 +671,6 @@ function startEditGame(gameId) {
   renderAssignChips();
   renderEditModeUI(g);
 
-  // 경기입력 탭으로 이동 + 상단 스크롤
   qsa(".tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === "game"));
   qsa(".page").forEach(p => p.classList.toggle("active", p.id === "game"));
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -689,7 +697,7 @@ function renderEditModeUI(g) {
   }
 }
 
-/* ============ 저장 ============ */
+/* 저장 */
 $("btnWinA").addEventListener("click", () => saveGame("A"));
 $("btnWinB").addEventListener("click", () => saveGame("B"));
 
@@ -730,7 +738,7 @@ function saveGame(winner) {
     .finally(() => { btnA.disabled = btnB.disabled = false; });
 }
 
-/* ============ 이 날 경기 목록 ============ */
+/* 이 날 경기 */
 function renderDayGames() {
   const d = $("date").value;
   const list = games
@@ -777,7 +785,7 @@ function deleteGame(id) {
     .catch(err => toast("삭제 실패: " + err.message, true));
 }
 
-/* ============ 통계 ============ */
+/* 통계 */
 function sortedGames(gs) {
   return [...gs].sort((a,b) => {
     const d = (a.date||"").localeCompare(b.date||"");
@@ -879,12 +887,15 @@ function calcPairs(data, name) {
   return { mates, opps };
 }
 
-/* ============ 모달 ============ */
+/* 모달 */
 $("btnCloseModal").addEventListener("click", closeModal);
 $("playerModal").addEventListener("click", e => {
   if (e.target.id === "playerModal") closeModal();
 });
-function closeModal() { $("playerModal").classList.remove("show"); }
+function closeModal() {
+  currentModalPlayer = null;
+  $("playerModal").classList.remove("show");
+}
 
 function topPairs(obj, minGames=2, limit=3, asc=false) {
   const arr = Object.keys(obj).map(n => {
@@ -929,7 +940,50 @@ function mmrChartSvg(history) {
   `;
 }
 
+/* 선수가 참가한 경기 목록 (수정/삭제 포함) */
+function renderPlayerGamesList(name) {
+  const list = sortedGames(games)
+    .filter(g => (g.teams.A||[]).includes(name) || (g.teams.B||[]).includes(name))
+    .reverse();
+
+  if (!list.length) {
+    return '<div class="muted" style="padding:4px 8px;">경기 기록이 없습니다</div>';
+  }
+  return list.map(g => {
+    const inA = (g.teams.A||[]).includes(name);
+    const myTeam = inA ? "A" : "B";
+    const won = g.winner === myTeam;
+    const renderTeam = (plist, teamKey) => {
+      const isWin = g.winner === teamKey;
+      return `<div class="${isWin?"won":""}">${teamKey}: ${(plist||[]).map(p =>
+        p === name ? `<span class="me">${esc(p)}</span>` : esc(p)
+      ).join(", ")}</div>`;
+    };
+    return `
+      <div class="hist-item ${won?'W':'L'}">
+        <div class="hist-top">
+          <span class="hist-badge ${won?'W':'L'}">${won?'승':'패'}</span>
+          <span><b>${esc(g.date || '')}</b> · ${myTeam}팀 소속</span>
+        </div>
+        <div class="hist-teams">
+          ${renderTeam(g.teams.A, "A")}
+          ${renderTeam(g.teams.B, "B")}
+        </div>
+        <div class="hist-btns">
+          <button class="e" data-gid="${g.id}">✏️ 수정</button>
+          <button class="d" data-gid="${g.id}">🗑️ 삭제</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
 function openPlayerModal(name) {
+  const inner = $("playerModal").querySelector(".inner");
+  const savedScroll = inner ? inner.scrollTop : 0;
+
+  currentModalPlayer = name;
+
   const stats = buildStats(games);
   const mmr = calcMMR(games);
   const s = stats[name] || { win:0, lose:0 };
@@ -978,11 +1032,33 @@ function openPlayerModal(name) {
 
     <div class="section-title">🎯 호구 (상대로 만나면 자주 이긴)</div>
     ${pairHtml(victim, "데이터 없음")}
+
+    <div class="section-title">📋 참가한 경기 (${total}경기) — 수정/삭제</div>
+    <div id="playerGamesList">${renderPlayerGamesList(name)}</div>
   `;
+
+  // 수정/삭제 버튼 연결
+  qsa("#playerGamesList .e").forEach(el =>
+    el.addEventListener("click", () => {
+      closeModal();
+      startEditGame(el.dataset.gid);
+    }));
+  qsa("#playerGamesList .d").forEach(el =>
+    el.addEventListener("click", () => {
+      if (!confirm("이 경기를 삭제할까요?\n(MMR과 랭킹이 재계산됩니다)")) return;
+      db.ref("games/" + el.dataset.gid).remove()
+        .then(() => toast("경기 삭제됨"))
+        .catch(err => toast("삭제 실패: " + err.message, true));
+    }));
+
   $("playerModal").classList.add("show");
+  requestAnimationFrame(() => {
+    const newInner = $("playerModal").querySelector(".inner");
+    if (newInner) newInner.scrollTop = savedScroll;
+  });
 }
 
-/* ============ 랭킹 ============ */
+/* 랭킹 */
 function renderRank() {
   const mmr = calcMMR(games);
   const stats = buildStats(games);
@@ -1008,7 +1084,7 @@ function renderRank() {
     el.addEventListener("click", () => openPlayerModal(el.dataset.name)));
 }
 
-/* ============ 동호회 통계 ============ */
+/* 동호회 통계 */
 function renderClubStats() {
   if (!games.length) {
     $("clubStats").innerHTML = '<div class="empty">경기 데이터가 없습니다</div>';
@@ -1078,18 +1154,20 @@ function renderClubStats() {
       <div class="title">🏆 최근 20경기 MVP</div>
       <div>${mvp ? `<b>${esc(mvp)}</b> (${recentWins[mvp]}승)` : "-"}</div>
     </div>`);
-  rows.push(`
-    <div class="club-stat">
-      <div class="title">🔥 현재 연승 챔피언</div>
-      <div>${topStreakPlayer ? `<b>${esc(topStreakPlayer)}</b> (${topStreakN}연승)` : "없음"}</div>
-    </div>`);
-  rows.push(`
-    <div class="club-stat">
-      <div class="title">💪 최강 듀오 (최소 3경기)</div>
-      <div>${bestDuo
-        ? `<b>${esc(bestDuo.names[0])} + ${esc(bestDuo.names[1])}</b> · ${bestDuo.win}승 ${bestDuo.lose}패 (${(bestRate*100).toFixed(0)}%)`
-        : "데이터 부족"}</div>
-    </div>`);
+  if (topStreakN >= 2) {
+    rows.push(`
+      <div class="club-stat">
+        <div class="title">🔥 현재 연승 챔피언</div>
+        <div><b>${esc(topStreakPlayer)}</b> (${topStreakN}연승)</div>
+      </div>`);
+  }
+  if (bestDuo) {
+    rows.push(`
+      <div class="club-stat">
+        <div class="title">💪 최강 듀오 (최소 3경기)</div>
+        <div><b>${esc(bestDuo.names[0])} + ${esc(bestDuo.names[1])}</b> · ${bestDuo.win}승 ${bestDuo.lose}패 (${(bestRate*100).toFixed(0)}%)</div>
+      </div>`);
+  }
   if (topRival && topRivalN >= 3) {
     const [r1, r2] = topRival.split("||");
     rows.push(`
