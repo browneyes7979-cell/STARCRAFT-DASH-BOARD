@@ -28,9 +28,52 @@ button {
 
 <h2>🔥 스타 대시보드</h2>
 
-<!-- 입력 -->
-<h3>경기 저장</h3>
-<button onclick="saveGame()">테스트 경기 저장</button>
+HTML
+<h3>경기 입력</h3>
+
+A팀<br>
+<select id="playerA1">
+  <option>상필</option>
+  <option>홍길동</option>
+  <option>김철수</option>
+  <option>이영희</option>
+</select>
+
+<select id="playerA2">
+  <option>상필</option>
+  <option>홍길동</option>
+  <option>김철수</option>
+  <option>이영희</option>
+</select>
+
+<br><br>
+
+B팀<br>
+<select id="playerB1">
+  <option>상필</option>
+  <option>홍길동</option>
+  <option>김철수</option>
+  <option>이영희</option>
+</select>
+
+<select id="playerB2">
+  <option>상필</option>
+  <option>홍길동</option>
+  <option>김철수</option>
+  <option>이영희</option>
+</select>
+
+<br><br>
+
+승리팀<br>
+<select id="winner">
+  <option value="A">A팀</option>
+  <option value="B">B팀</option>
+</select>
+
+<br><br>
+
+<button onclick="saveGame()">경기 저장</button>
 
 <!-- 대시보드 -->
 <h3>🏆 랭킹</h3>
@@ -65,10 +108,16 @@ function saveGame() {
     games: [
       {
         teams: {
-          A: ["상필","홍길동"],
-          B: ["김철수","이영희"]
+          A: [
+            document.getElementById("playerA1").value,
+            document.getElementById("playerA2").value
+          ],
+          B: [
+            document.getElementById("playerB1").value,
+            document.getElementById("playerB2").value
+          ]
         },
-        winner: Math.random() > 0.5 ? "A" : "B"
+        winner: document.getElementById("winner").value
       }
     ]
   };
