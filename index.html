@@ -21,6 +21,10 @@ button {
   margin: 10px 0;
   border-radius: 10px;
 }
+select {
+  padding: 5px;
+  margin: 3px;
+}
 </style>
 </head>
 
@@ -28,40 +32,18 @@ button {
 
 <h2>🔥 스타 대시보드</h2>
 
-HTML
+<!-- 경기 입력 -->
 <h3>경기 입력</h3>
 
 A팀<br>
-<select id="playerA1">
-  <option>상필</option>
-  <option>홍길동</option>
-  <option>김철수</option>
-  <option>이영희</option>
-</select>
-
-<select id="playerA2">
-  <option>상필</option>
-  <option>홍길동</option>
-  <option>김철수</option>
-  <option>이영희</option>
-</select>
+<select id="playerA1"></select>
+<select id="playerA2"></select>
 
 <br><br>
 
 B팀<br>
-<select id="playerB1">
-  <option>상필</option>
-  <option>홍길동</option>
-  <option>김철수</option>
-  <option>이영희</option>
-</select>
-
-<select id="playerB2">
-  <option>상필</option>
-  <option>홍길동</option>
-  <option>김철수</option>
-  <option>이영희</option>
-</select>
+<select id="playerB1"></select>
+<select id="playerB2"></select>
 
 <br><br>
 
@@ -75,9 +57,25 @@ B팀<br>
 
 <button onclick="saveGame()">경기 저장</button>
 
-<!-- 대시보드 -->
+<hr>
+
+<!-- 선수 추가 -->
+<h3>선수 추가</h3>
+<input id="newPlayer" placeholder="이름 입력">
+<button onclick="addPlayer()">추가</button>
+
+<hr>
+
+<!-- 랭킹 -->
 <h3>🏆 랭킹</h3>
 <div id="dashboard"></div>
+
+<hr>
+
+<!-- 최근 경기 -->
+<h3>📅 최근 경기</h3>
+<div id="recent"></div>
+
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -85,7 +83,6 @@ B팀<br>
 
 <script>
 
-// 🔥 네 config 그대로 사용
 const firebaseConfig = {
   apiKey: "AIzaSyDKvEB_SrvDSADbqxX0LTgejksxtLt4G6U",
   authDomain: "starcraft-dashboard.firebaseapp.com",
@@ -100,7 +97,34 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 
-// 🔥 테스트 데이터 저장
+// 🔥 선수 목록
+let players = ["상필","홍길동","김철수","이영희"];
+
+// 🔥 셀렉트 채우기
+function updateSelects() {
+  ["playerA1","playerA2","playerB1","playerB2"].forEach(id => {
+    let el = document.getElementById(id);
+    el.innerHTML = "";
+    players.forEach(p => {
+      el.innerHTML += `<option>${p}</option>`;
+    });
+  });
+}
+updateSelects();
+
+
+// 🔥 선수 추가
+function addPlayer() {
+  let name = document.getElementById("newPlayer").value;
+  if (!name) return;
+
+  players.push(name);
+  updateSelects();
+  document.getElementById("newPlayer").value = "";
+}
+
+
+// 🔥 경기 저장
 function saveGame() {
 
   const game = {
@@ -126,21 +150,26 @@ function saveGame() {
 }
 
 
-// 🔥 데이터 불러오기 + 통계
+// 🔥 데이터 불러오기
 db.ref("games").on("value", snapshot => {
 
   let data = [];
+  let recent = [];
 
   snapshot.forEach(child => {
-    data.push(child.val());
+    let val = child.val();
+    val.key = child.key;
+    data.push(val);
+    recent.push(val);
   });
 
   const stats = buildStats(data);
   renderDashboard(stats);
+  renderRecent(recent);
 });
 
 
-// 🔥 개인 통계
+// 🔥 통계
 function buildStats(data) {
 
   let stats = {};
@@ -168,7 +197,7 @@ function buildStats(data) {
 }
 
 
-// 🔥 화면 표시
+// 🔥 랭킹 출력
 function renderDashboard(stats) {
 
   let arr = Object.keys(stats).map(name => {
@@ -177,21 +206,14 @@ function renderDashboard(stats) {
     let total = s.win + s.lose;
     let rate = total ? s.win / total : 0;
 
-    return {
-      name,
-      win: s.win,
-      lose: s.lose,
-      rate
-    };
+    return { name, win: s.win, lose: s.lose, rate };
   });
 
-  // 승률순 정렬
   arr.sort((a,b)=>b.rate - a.rate);
 
   let html = "";
 
   arr.forEach((p, idx) => {
-
     html += `
       <div class="card">
         ${idx+1}위 - ${p.name}<br>
@@ -201,6 +223,38 @@ function renderDashboard(stats) {
   });
 
   document.getElementById("dashboard").innerHTML = html;
+}
+
+
+// 🔥 최근 경기 + 삭제
+function renderRecent(list) {
+
+  list.reverse();
+
+  let html = "";
+
+  list.forEach(g => {
+
+    let game = g.games[0];
+
+    html += `
+      <div class="card">
+        ${g.date}<br>
+        ${game.teams.A.join(", ")} vs ${game.teams.B.join(", ")}<br>
+        승리: ${game.winner}
+        <br>
+        <button onclick="deleteGame('${g.key}')">삭제</button>
+      </div>
+    `;
+  });
+
+  document.getElementById("recent").innerHTML = html;
+}
+
+
+// 🔥 삭제 기능
+function deleteGame(key) {
+  db.ref("games/" + key).remove();
 }
 
 </script>
