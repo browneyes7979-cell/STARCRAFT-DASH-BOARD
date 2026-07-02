@@ -87,6 +87,10 @@
   .rank-row.top1 { border-left-color: gold; }
   .rank-row.top2 { border-left-color: silver; }
   .rank-row.top3 { border-left-color: #cd7f32; }
+  .rank-row.prov { border-left-color: #ccc; opacity: .72; }
+  .rank-row.prov .rk { color: #bbb; }
+  .prov-title { margin: 16px 0 4px; font-size: 12px; color: #888; font-weight: 700;
+                border-top: 1px dashed #ddd; padding-top: 10px; }
 
   .game-row { padding: 10px 0; border-bottom: 1px solid #eee; display: flex;
               align-items: flex-start; gap: 8px; }
@@ -123,6 +127,9 @@
                         margin: 30px auto; border-radius: 12px; padding: 16px;
                         max-height: 90vh; overflow-y: auto; }
   #playerModal h2 { margin: 0 0 8px 0; font-size: 20px; }
+  .prov-badge { display: inline-block; background: #fff3cd; color: #8a6d3b;
+                border: 1px solid #f0d488; border-radius: 6px; padding: 6px 10px;
+                font-size: 12px; font-weight: 600; margin: 4px 0 8px; }
   .stat-row { display: flex; justify-content: space-between; padding: 6px 0;
               border-bottom: 1px solid #f2f2f2; font-size: 14px; }
   .stat-row:last-child { border-bottom: none; }
@@ -160,6 +167,31 @@
   .hist-btns .d { background: #c0392b; }
 
   .version { font-size: 10px; color: #aaa; text-align: center; padding: 6px; }
+
+  /* 설명서 아이콘 & 모달 */
+  .icon-btn { width: auto; padding: 3px 9px; font-size: 15px; margin: 0 0 0 8px;
+              background: #444; border: none; border-radius: 6px; line-height: 1.4; }
+  #manualModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55);
+                 z-index: 100; overflow-y: auto; }
+  #manualModal.show { display: block; }
+  #manualModal .inner { background: #fff; width: 92%; max-width: 600px; margin: 24px auto;
+                        border-radius: 12px; padding: 18px; max-height: 90vh; overflow-y: auto; }
+  #manualModal h2 { margin: 0 0 2px; font-size: 20px; }
+  .man-intro { font-size: 13px; color: #555; line-height: 1.6; background: #f9f9f9;
+               border-radius: 8px; padding: 12px; margin: 8px 0 4px; }
+  .man-block { border: 1px solid #eee; border-radius: 8px; padding: 12px; margin: 10px 0; }
+  .man-block .mt { font-size: 15px; font-weight: 700; color: #222; margin-bottom: 4px; }
+  .man-block .how { font-size: 13px; color: #333; line-height: 1.6; margin: 4px 0; }
+  .man-formula { font-family: ui-monospace, Menlo, Consolas, monospace; background: #222;
+                 color: #7CFC98; padding: 8px 10px; border-radius: 6px; font-size: 12px;
+                 margin: 6px 0; display: block; overflow-x: auto; white-space: pre-wrap; }
+  .man-why { font-size: 13px; color: #1a5276; background: #eaf2f8; border-left: 4px solid #2980b9;
+             border-radius: 6px; padding: 8px 10px; margin: 6px 0; line-height: 1.6; }
+  .man-prob { font-size: 13px; color: #7b241c; background: #fdecea; border-left: 4px solid #c0392b;
+              border-radius: 6px; padding: 8px 10px; margin: 6px 0; line-height: 1.6; }
+  .man-ex { font-size: 12px; color: #555; background: #fffbe6; border-left: 3px solid #f39c12;
+            border-radius: 4px; padding: 6px 10px; margin: 6px 0; line-height: 1.6; }
+  .man-ex b { color: #d35400; }
 
   /* 종족 */
   .race-ico { vertical-align: middle; flex-shrink: 0; }
@@ -200,7 +232,7 @@
 
 <div id="app" style="display:none;">
   <header>
-    <div><b>스타 대시보드</b></div>
+    <div><b>스타 대시보드</b> <button id="btnManual" class="icon-btn" title="통계 계산 방식 설명서">📖</button></div>
     <div class="who">
       <span id="userName"></span>
       <button id="btnLogout" class="secondary" style="width:auto; padding:4px 10px; font-size:12px; margin-left:8px;">로그아웃</button>
@@ -279,18 +311,25 @@
     </div>
     <div class="card">
       <h3>랭킹 (MMR 기준)</h3>
-      <p class="muted" style="margin:0 0 8px 0;">이름을 누르면 상세 통계 + 경기 기록 수정/삭제</p>
+      <p class="muted" style="margin:0 0 8px 0;">최소 5경기부터 순위 반영 · 이름을 누르면 상세 통계 + 경기 기록 수정/삭제</p>
       <div id="rankList"></div>
     </div>
   </div>
 
-  <div class="version">v2026-04-21-F (종족 변경 PERMISSION_DENIED 수정) — 이 줄이 안 보이면 구버전입니다</div>
+  <div class="version">v2026-07-02 (랭킹 최소 5경기 게이트 + 보정 승률 적용) — 이 줄이 안 보이면 구버전입니다</div>
 </div>
 
 <div id="playerModal">
   <div class="inner">
     <button id="btnCloseModal" class="secondary" style="width:auto; padding:4px 12px; float:right; font-size:12px;">닫기</button>
     <div id="modalBody"></div>
+  </div>
+</div>
+
+<div id="manualModal">
+  <div class="inner">
+    <button id="btnCloseManual" class="secondary" style="width:auto; padding:4px 12px; float:right; font-size:12px;">닫기</button>
+    <div id="manualBody"></div>
   </div>
 </div>
 
@@ -317,6 +356,15 @@ const $ = id => document.getElementById(id);
 const qsa = sel => [...document.querySelectorAll(sel)];
 const esc = s => String(s).replace(/[&<>"']/g, c =>
   ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+/* ===== 랭킹 규칙 (여기 숫자만 바꾸면 조정됩니다) ===== */
+const MIN_GAMES = 5;               // 이 경기 수 미만이면 순위 제외 ("배치 중")
+const PRIOR_W = 5, PRIOR_L = 5;    // 보정 승률용 가상 전적 (클수록 50%로 더 끌어당김)
+// 보정 승률: 가상 5승5패를 미리 깔고 실제 전적을 얹어 계산 → 표본 적으면 50% 근처로 수렴
+function adjRate(win, lose) {
+  return (win + PRIOR_W) / (win + lose + PRIOR_W + PRIOR_L);
+}
+/* ================================================= */
 
 /* 종족 아이콘 (인라인 SVG) */
 const RACE_LABEL = { T: "테란", Z: "저그", P: "프로토스", R: "랜덤" };
@@ -990,6 +1038,96 @@ function closeModal() {
   $("playerModal").classList.remove("show");
 }
 
+/* ===== 사용설명서 (통계 계산 방식) ===== */
+$("btnManual").addEventListener("click", openManual);
+$("btnCloseManual").addEventListener("click", closeManual);
+$("manualModal").addEventListener("click", e => {
+  if (e.target.id === "manualModal") closeManual();
+});
+function closeManual() { $("manualModal").classList.remove("show"); }
+function openManual() {
+  renderManual();
+  $("manualModal").classList.add("show");
+  const inner = $("manualModal").querySelector(".inner");
+  if (inner) inner.scrollTop = 0;
+}
+
+function renderManual() {
+  const P = PRIOR_W + PRIOR_L; // 가상 전적 총합 (기본 10)
+  $("manualBody").innerHTML = `
+    <h2>📖 통계 계산 설명서</h2>
+    <div class="man-intro">
+      이 대시보드는 <b>4대4처럼 팀 단위 승·패만 기록</b>합니다. 그래서 모든 개인 지표는
+      "그 사람이 낀 팀이 이겼나/졌나"에서 <b>간접적으로 추정</b>한 값이에요.
+      아래는 각 숫자가 <b>어떻게 계산되는지 · 왜 그렇게 만들었는지 · 어떤 한계가 있는지</b> 예시와 함께 정리한 겁니다.
+    </div>
+
+    <div class="man-block">
+      <div class="mt">① MMR (랭킹 정렬 기준)</div>
+      <div class="how">기준 1000점에서 시작해, 참가한 경기가 이기면 +10 · 지면 −10. 결국:</div>
+      <span class="man-formula">MMR = 1000 + (이긴 판 − 진 판) × 10</span>
+      <div class="man-why"><b>왜 이렇게?</b> 팀 게임이라 개인 실력을 정밀히 못 재니, "많이 나와서 많이 이긴 사람이 올라간다"는 <b>단순·투명</b>한 규칙으로 뒀습니다. 참석과 승리를 함께 보상하는 취지예요.</div>
+      <div class="man-prob"><b>한계</b> — 상대가 강하든 약하든 똑같이 ±10입니다. 실력 격차가 반영되지 않아요.</div>
+      <div class="man-ex">예: <b>김성은</b>이 늘 약한 팀만 상대로 이겨서 20승, <b>강정훈</b>이 늘 강팀과 붙어 20승이면 <b>둘 다 +200점으로 동일</b>. 실제 실력차가 순위에 안 나타납니다. (정통 Elo로 바꾸면 해결되지만 규칙이 복잡해짐)</div>
+    </div>
+
+    <div class="man-block">
+      <div class="mt">② 보정 승률 (표본 적을 때 신뢰도 보정)</div>
+      <div class="how">실제 승률과 별개로, <b>가상의 ${PRIOR_W}승 ${PRIOR_L}패</b>를 미리 깔아두고 실제 전적을 더해서 계산합니다.</div>
+      <span class="man-formula">보정 승률 = (승 + ${PRIOR_W}) ÷ (승 + 패 + ${P})</span>
+      <div class="man-why"><b>왜 이렇게?</b> 경기 수가 적으면 승률이 크게 튑니다(1승 0패 = 100%). 가상 전적이 <b>표본이 쌓이기 전까지는 50% 쪽으로 끌어당겨</b> 과대·과소평가를 막아줘요. 경기를 많이 할수록 가상 전적의 영향이 옅어져 <b>실제 실력으로 수렴</b>합니다.</div>
+      <div class="man-prob"><b>한계</b> — 진짜 실력자도 초반에는 실제보다 낮게 보입니다.</div>
+      <div class="man-ex">예: 신입이 <b>8승 0패(실제 100%)</b>여도 보정 승률은 (8+${PRIOR_W}) ÷ (8+${P}) = <b>${((8+PRIOR_W)/(8+P)*100).toFixed(0)}%</b>로 나옵니다. 억울해 보여도 몇 경기 더 쌓이면 실제 실력대로 올라가요. 반대로 가상 전적(${PRIOR_W})을 너무 크게 잡으면 고수가 저평가됩니다.</div>
+    </div>
+
+    <div class="man-block">
+      <div class="mt">③ 최소 ${MIN_GAMES}경기 게이트 (순위 자격)</div>
+      <div class="how">${MIN_GAMES}경기 미만인 선수는 메인 순위(1·2·3…)에서 빼고 <b>"배치 중"</b> 칸에 따로 표시합니다.</div>
+      <div class="man-why"><b>왜 이렇게?</b> 한 번도 안 뛴 사람이 기본 1000점으로 순위 한가운데 껴서 왜곡되던 문제, 그리고 1~2경기 요행으로 상위권에 뜨는 문제를 막기 위해서예요.</div>
+      <div class="man-prob"><b>한계</b> — 경계값 ${MIN_GAMES}는 다소 임의적입니다.</div>
+      <div class="man-ex">예: 신입이 <b>4승 0패</b>여도 아직 순위에 안 뜹니다(1경기 더 필요). "배치 중 4/${MIN_GAMES}"으로 표시돼요. 기준을 바꾸고 싶으면 코드 위쪽 <b>MIN_GAMES</b> 숫자만 고치면 됩니다.</div>
+    </div>
+
+    <div class="man-block">
+      <div class="mt">④ 연승 · 연패 / 현재 기록</div>
+      <div class="how">그 선수가 <b>참가한 경기만</b> 시간순으로 승·패를 나열해 연속 횟수를 셉니다. "최근 10경기"와 MMR 추이 그래프도 같은 방식이에요.</div>
+      <div class="man-why"><b>왜 이렇게?</b> 요즘 물오른 상태(폼)를 한눈에 보여주려고요.</div>
+      <div class="man-prob"><b>한계</b> — 팀 게임이라 내 연승이 <b>팀빨</b>일 수 있습니다.</div>
+      <div class="man-ex">예: <b>박상필</b>이 5연승이어도, 매번 강정훈·권준엽과 같은 팀이었다면 개인 실력보다 팀 구성 덕일 수 있어요.</div>
+    </div>
+
+    <div class="man-block">
+      <div class="mt">⑤ 종족 상성 (상대 기준)</div>
+      <div class="how">내가 이기거나 진 경기에서 만난 <b>상대 팀원 한 명 한 명을</b> 그 사람의 종족 칸에 셉니다. 4대4면 한 경기에 상대 4명이 각각 카운트돼요. (종족 미설정 'R' 상대는 제외)</div>
+      <div class="man-why"><b>왜 이렇게?</b> "저그전에 약하다" 같은 경향을 대략 파악하기 위해서입니다.</div>
+      <div class="man-prob"><b>한계</b> — 경기 수와 상성 합계가 안 맞습니다(사람 수로 세기 때문). 또 내가 이긴 게 그 종족 상대 때문인지, 우리 팀 전체 덕인지 구분하지 못합니다.</div>
+      <div class="man-ex">예: <b>강정훈</b>은 전적이 45경기인데 상성 합계는 저그 48 + 프로토스 63으로 훨씬 큽니다. 버그가 아니라, 한 경기에서 만난 상대 <b>여러 명</b>을 각각 세기 때문이에요.</div>
+    </div>
+
+    <div class="man-block">
+      <div class="mt">⑥ 파트너 · 천적 · 호구</div>
+      <div class="how"><b>최고/최악 파트너</b>: 같은 팀이었을 때 승률(최소 2경기). <b>천적</b>: 상대로 만나 내가 자주 진 사람. <b>호구</b>: 상대로 만나 자주 이긴 사람.</div>
+      <div class="man-why"><b>왜 이렇게?</b> 팀을 짤 때 궁합과 상대 상성을 참고하라고 넣었습니다.</div>
+      <div class="man-prob"><b>한계</b> — 최소 2경기라 <b>우연의 영향이 큽니다</b>. 그리고 역시 팀 게임이라 그 한 사람 때문인지 알 수 없어요.</div>
+      <div class="man-ex">예: <b>김동인</b>이 "호구 86%(12승 2패)"로 떠도, 그 14경기가 대부분 우리 팀이 강했던 경기라면 김동인 개인 탓이 아닐 수 있습니다.</div>
+    </div>
+
+    <div class="man-block">
+      <div class="mt">⑦ 동호회 통계 (MVP · 최강 듀오 · 라이벌 · 누적)</div>
+      <div class="how"><b>최근 20경기 MVP</b>: 최근 20경기 중 승리 팀에 이름이 든 횟수 1위. <b>최강 듀오</b>: 같은 팀으로 3경기 이상 뛴 2인 조합 중 승률 1위. <b>최다 라이벌</b>: A팀 vs B팀으로 가장 자주 맞선 두 명. <b>누적</b>: 총 경기 수와 참여 선수 수.</div>
+      <div class="man-why"><b>왜 이렇게?</b> 모임의 재미 요소(누가 요즘 잘나가나, 찰떡 콤비는 누구인가)를 보여주려고요.</div>
+      <div class="man-prob"><b>한계</b> — MVP는 <b>많이 나온 사람이 유리</b>(참석 편향), 최강 듀오는 3경기만 넘으면 뽑혀 표본이 작을 수 있습니다.</div>
+      <div class="man-ex">예: 매번 나오는 <b>배재현</b>이 승률은 평범해도 절대 승수가 많아 "최근 20경기 MVP(11승)"가 될 수 있어요. 승률과는 별개의 지표입니다.</div>
+    </div>
+
+    <div class="man-intro" style="background:#eef7ee; color:#1e5631;">
+      <b>정리 —</b> 이 지표들은 "실력의 정답"이 아니라 <b>팀 승패 기록에서 뽑아낸 추정치</b>입니다.
+      참석이 많을수록(경기 수가 쌓일수록) 신뢰도가 올라가고, 게이트·보정 승률은 바로 그
+      <b>"적게 나온 사람 데이터는 조심해서 보자"</b>는 장치예요.
+    </div>
+  `;
+}
+
 function topPairs(obj, minGames=2, limit=3, asc=false) {
   const arr = Object.keys(obj).map(n => {
     const s = obj[n];
@@ -1084,6 +1222,7 @@ function openPlayerModal(name) {
   const s = stats[name] || { win:0, lose:0 };
   const total = s.win + s.lose;
   const rate = total ? (s.win/total*100).toFixed(1) : "0.0";
+  const adj = total ? (adjRate(s.win, s.lose)*100).toFixed(1) : "–";
   const streak = calcStreaks(games, name);
   const history = calcMMRHistory(games, name);
   const { mates, opps } = calcPairs(games, name);
@@ -1127,11 +1266,17 @@ function openPlayerModal(name) {
     </div>`;
   }).join("");
 
+  const provBadge = (total < MIN_GAMES)
+    ? `<div class="prov-badge">⏳ 배치 중 · ${total}/${MIN_GAMES}경기 (순위 미반영)</div>`
+    : "";
+
   $("modalBody").innerHTML = `
     <h2>${esc(name)} ${raceIcon(myRace, 20)}</h2>
+    ${provBadge}
     <div class="stat-row"><span>주 종족</span><b>${RACE_LABEL[myRace]}</b></div>
     <div class="stat-row"><span>전적</span><b>${s.win}승 ${s.lose}패 (${total}경기)</b></div>
-    <div class="stat-row"><span>승률</span><b>${rate}%</b></div>
+    <div class="stat-row"><span>승률 (실제)</span><b>${rate}%</b></div>
+    <div class="stat-row"><span>보정 승률 <span class="muted">(가상 5승5패 반영)</span></span><b>${adj}%</b></div>
     <div class="stat-row"><span>MMR</span><b>${Math.round(mmr[name]||1000)}</b></div>
     <div class="stat-row"><span>현재 기록</span><b>${curStreakText}</b></div>
     <div class="stat-row"><span>최장 연승 / 연패</span><b>${streak.longestW} / ${streak.longestL}</b></div>
@@ -1190,24 +1335,55 @@ function openPlayerModal(name) {
 function renderRank() {
   const mmr = calcMMR(games);
   const stats = buildStats(games);
-  const arr = players.map(p => ({
-    name: p.name,
-    mmr: Math.round(mmr[p.name] || 1000),
-    win: (stats[p.name]||{}).win || 0,
-    lose: (stats[p.name]||{}).lose || 0
-  })).sort((a,b) => b.mmr - a.mmr);
+  const all = players.map(p => {
+    const s = stats[p.name] || { win:0, lose:0 };
+    const total = s.win + s.lose;
+    return {
+      name: p.name,
+      mmr: Math.round(mmr[p.name] || 1000),
+      win: s.win,
+      lose: s.lose,
+      total,
+      adj: total ? adjRate(s.win, s.lose) : 0
+    };
+  });
 
-  if (!arr.length) {
+  // 5경기 이상: 순위 반영 (MMR 순), 5경기 미만: 배치 중
+  const ranked = all.filter(x => x.total >= MIN_GAMES)
+                    .sort((a,b) => b.mmr - a.mmr || b.adj - a.adj);
+  const provisional = all.filter(x => x.total < MIN_GAMES)
+                         .sort((a,b) => b.total - a.total || a.name.localeCompare(b.name,"ko"));
+
+  if (!all.length) {
     $("rankList").innerHTML = '<div class="empty">데이터 없음</div>';
     return;
   }
-  $("rankList").innerHTML = arr.map((x,i) => `
-    <div class="rank-row ${i<3?"top"+(i+1):""}" data-name="${esc(x.name)}">
-      <div class="rk">${i+1}</div>
-      <div class="nm">${esc(x.name)}</div>
-      <div class="sc">${x.mmr} · ${x.win}승 ${x.lose}패</div>
-    </div>
-  `).join("");
+
+  let html = "";
+  if (ranked.length) {
+    html += ranked.map((x,i) => `
+      <div class="rank-row ${i<3?"top"+(i+1):""}" data-name="${esc(x.name)}">
+        <div class="rk">${i+1}</div>
+        <div class="nm">${esc(x.name)}</div>
+        <div class="sc">${x.mmr} · ${x.win}승 ${x.lose}패 · 보정 ${(x.adj*100).toFixed(0)}%</div>
+      </div>
+    `).join("");
+  } else {
+    html += `<div class="empty">${MIN_GAMES}경기 이상 뛴 선수가 아직 없습니다</div>`;
+  }
+
+  if (provisional.length) {
+    html += `<div class="prov-title">⏳ 배치 중 (${MIN_GAMES}경기 미만 · 순위 제외)</div>`;
+    html += provisional.map(x => `
+      <div class="rank-row prov" data-name="${esc(x.name)}">
+        <div class="rk">–</div>
+        <div class="nm">${esc(x.name)}</div>
+        <div class="sc">${x.total}/${MIN_GAMES}경기 · ${x.win}승 ${x.lose}패</div>
+      </div>
+    `).join("");
+  }
+
+  $("rankList").innerHTML = html;
   qsa("#rankList .rank-row").forEach(el =>
     el.addEventListener("click", () => openPlayerModal(el.dataset.name)));
 }
