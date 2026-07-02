@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -316,7 +317,7 @@
     </div>
   </div>
 
-  <div class="version">v2026-07-02 (랭킹 최소 5경기 게이트 + 보정 승률 적용) — 이 줄이 안 보이면 구버전입니다</div>
+  <div class="version">v2026-07-02-b (랭킹 게이트+보정승률+종족표시 · 설명서 추가) — 이 줄이 안 보이면 구버전입니다</div>
 </div>
 
 <div id="playerModal">
@@ -1340,6 +1341,7 @@ function renderRank() {
     const total = s.win + s.lose;
     return {
       name: p.name,
+      race: p.race || "R",
       mmr: Math.round(mmr[p.name] || 1000),
       win: s.win,
       lose: s.lose,
@@ -1364,7 +1366,7 @@ function renderRank() {
     html += ranked.map((x,i) => `
       <div class="rank-row ${i<3?"top"+(i+1):""}" data-name="${esc(x.name)}">
         <div class="rk">${i+1}</div>
-        <div class="nm">${esc(x.name)}</div>
+        <div class="nm">${raceIcon(x.race,15)} ${esc(x.name)}</div>
         <div class="sc">${x.mmr} · ${x.win}승 ${x.lose}패 · 보정 ${(x.adj*100).toFixed(0)}%</div>
       </div>
     `).join("");
@@ -1377,7 +1379,7 @@ function renderRank() {
     html += provisional.map(x => `
       <div class="rank-row prov" data-name="${esc(x.name)}">
         <div class="rk">–</div>
-        <div class="nm">${esc(x.name)}</div>
+        <div class="nm">${raceIcon(x.race,15)} ${esc(x.name)}</div>
         <div class="sc">${x.total}/${MIN_GAMES}경기 · ${x.win}승 ${x.lose}패</div>
       </div>
     `).join("");
