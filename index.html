@@ -199,6 +199,32 @@
   .race-stat .rs-head { display: flex; align-items: center; gap: 6px; font-size: 14px; margin-bottom: 4px; }
   .race-stat .rs-body { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
 
+  /* 종족 선택 팝업 */
+  #racePicker { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 300; }
+  #racePicker.show { display: flex; align-items: center; justify-content: center; }
+  #racePicker .rp-inner { background: #fff; border-radius: 14px; padding: 16px;
+                          width: 88%; max-width: 340px; }
+  #rpTitle { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .rp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .rp-btn { display: flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 15px 6px; font-size: 15px; background: #f2f2f2; color: #333;
+            border-radius: 10px; font-weight: 700; margin: 0; width: 100%; }
+  .rp-btn.on { background: #fff3e6; box-shadow: inset 0 0 0 3px #ff6600; color: #d35400; }
+
+  /* 종족 선택창 */
+  #racePicker { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5);
+                z-index: 300; }
+  #racePicker.show { display: flex; align-items: center; justify-content: center; }
+  #racePicker .inner { background: #fff; width: 88%; max-width: 340px;
+                       border-radius: 14px; padding: 16px; }
+  #racePickerTitle { font-size: 16px; font-weight: 700; margin-bottom: 10px; text-align: center; }
+  #racePickerTitle .muted { font-weight: 400; }
+  .rp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .rp-grid button { width: 100%; margin: 0; padding: 14px 6px; font-size: 14px;
+                    background: #f4f4f4; color: #333; border: 2px solid #eee; border-radius: 10px;
+                    display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .rp-grid button.cur { border-color: #ff6600; background: #fff3e6; color: #d35400; }
+
   /* 개정 공지 */
   #newsModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55);
                z-index: 200; overflow-y: auto; }
@@ -294,11 +320,13 @@
     <div class="card">
       <h3>선수 추가</h3>
       <input id="newPlayer" placeholder="이름 입력" maxlength="20">
-      <button id="btnAddPlayer">추가</button>
+      <div class="muted" style="margin-top:6px;">종족 (나중에 바꿀 수 있어요)</div>
+      <div id="newRaceSel" class="rp-grid"></div>
+      <button id="btnAddPlayer" style="margin-top:8px;">추가</button>
     </div>
     <div class="card">
       <h3>선수 목록 <span class="muted" id="playerCount"></span></h3>
-      <p class="muted" style="margin:0 0 8px 0;">이름을 누르면 상세 통계, 종족 버튼 누르면 종족 순환</p>
+      <p class="muted" style="margin:0 0 8px 0;">이름을 누르면 상세 통계 · 종족 버튼을 누르면 종족 선택</p>
       <div id="raceLegend" class="race-legend"></div>
       <div id="playerList"></div>
     </div>
@@ -325,15 +353,10 @@
       <input type="date" id="date">
 
       <h4>팀 배정 <span class="muted" id="assignHint"></span></h4>
-      <p class="muted" style="margin:0 0 6px 0; font-size:12px;">이름을 누르면 미참여 → A팀 → B팀 → 미참여 순환</p>
-      <div id="raceModeBanner" class="edit-banner" style="display:none; background:#e8f4fd; border-left-color:#2980b9;">
-        <div>🎭 <b style="color:#1a5276;">종족 수정 모드</b> <span class="muted">이름을 누르면 팀이 아니라 종족이 바뀝니다 (T→Z→P→랜덤)</span></div>
-        <button id="btnExitRaceMode">끝내기</button>
-      </div>
+      <p class="muted" style="margin:0 0 6px 0; font-size:12px;">이름을 누르면 미참여 → A팀 → B팀 순환 · <b>길게 누르면(약 0.5초) 종족 변경</b></p>
       <div id="assignList"></div>
 
       <div class="tools-row">
-        <button id="btnRaceMode" class="secondary tool-btn">🎭 종족수정</button>
         <button id="btnSwapTeams" class="secondary tool-btn">🔄 A↔B 교체</button>
         <button id="btnCopyLast" class="secondary tool-btn">↩️ 직전 복사</button>
         <button id="btnClearAssign" class="secondary tool-btn">🗑️ 초기화</button>
@@ -401,6 +424,30 @@
   <div class="inner">
     <div id="newsBody"></div>
     <button id="btnCloseNews" style="margin-top:10px;">확인했습니다</button>
+  </div>
+</div>
+
+<div id="racePicker">
+  <div class="inner">
+    <div id="rpTitle"></div>
+    <div id="rpBtns" class="rp-btns"></div>
+    <button id="rpCancel" class="secondary">취소</button>
+  </div>
+</div>
+
+<div id="racePicker">
+  <div class="rp-inner">
+    <div id="rpTitle"></div>
+    <div id="rpGrid" class="rp-grid"></div>
+    <button id="rpCancel" class="secondary" style="margin-top:10px;">취소</button>
+  </div>
+</div>
+
+<div id="racePicker">
+  <div class="inner">
+    <div id="racePickerTitle"></div>
+    <div id="racePickerBtns" class="rp-grid"></div>
+    <button id="btnCloseRacePicker" class="secondary" style="margin-top:8px;">취소</button>
   </div>
 </div>
 
@@ -607,17 +654,6 @@ let games = [];
 let assign = {};
 let editingGameId = null;
 let currentModalPlayer = null;
-let raceEditMode = false;
-
-function setRaceMode(on) {
-  raceEditMode = on;
-  $("raceModeBanner").style.display = on ? "flex" : "none";
-  $("btnRaceMode").textContent = on ? "✅ 종족수정 중" : "🎭 종족수정";
-  $("btnRaceMode").style.background = on ? "#2980b9" : "";
-  renderAssignChips();
-}
-$("btnRaceMode").addEventListener("click", () => setRaceMode(!raceEditMode));
-$("btnExitRaceMode").addEventListener("click", () => setRaceMode(false));
 
 $("date").value = new Date().toISOString().split("T")[0];
 $("date").addEventListener("change", renderDayGames);
@@ -652,6 +688,16 @@ function bootData() {
 }
 
 /* 선수 */
+let newPlayerRace = "R";
+function renderNewRaceSel() {
+  $("newRaceSel").innerHTML = ["T","Z","P","R"].map(r =>
+    `<button class="rp-btn ${r===newPlayerRace?"on":""}" data-race="${r}">${raceIcon(r,18)} ${RACE_LABEL[r]}</button>`
+  ).join("");
+  qsa("#newRaceSel .rp-btn").forEach(b =>
+    b.addEventListener("click", () => { newPlayerRace = b.dataset.race; renderNewRaceSel(); }));
+}
+renderNewRaceSel();
+
 $("btnAddPlayer").addEventListener("click", addPlayer);
 $("newPlayer").addEventListener("keydown", e => { if (e.key === "Enter") addPlayer(); });
 
@@ -665,11 +711,16 @@ function addPlayer() {
   btn.disabled = true;
   db.ref("players").push({
     name,
-    race: "R",
+    race: newPlayerRace,
     createdAt: firebase.database.ServerValue.TIMESTAMP,
     createdBy: auth.currentUser ? auth.currentUser.uid : null
   })
-  .then(() => { input.value = ""; toast(`"${name}" 추가됨`); })
+  .then(() => {
+    input.value = "";
+    toast(`"${name}" 추가됨 (${RACE_LABEL[newPlayerRace]})`);
+    newPlayerRace = "R";
+    renderNewRaceSel();
+  })
   .catch(err => { toast("추가 실패: " + err.message, true); console.error(err); })
   .finally(() => { btn.disabled = false; });
 }
@@ -700,22 +751,37 @@ function renderPlayers() {
   qsa("#playerList .name").forEach(el =>
     el.addEventListener("click", () => openPlayerModal(el.dataset.name)));
   qsa("#playerList .race-btn").forEach(el =>
-    el.addEventListener("click", () => cyclePlayerRace(el.dataset.id)));
+    el.addEventListener("click", () => openRacePicker(el.dataset.id)));
   qsa("#playerList .del").forEach(el =>
     el.addEventListener("click", () => deletePlayer(el.dataset.id, el.dataset.name)));
 }
 
-function cyclePlayerRace(id) {
-  const p = players.find(x => x.id === id);
+/* 종족 선택 팝업 (어디서든 1탭으로 지정) */
+let racePickerTarget = null;
+$("rpCancel").addEventListener("click", closeRacePicker);
+$("racePicker").addEventListener("click", e => { if (e.target.id === "racePicker") closeRacePicker(); });
+function closeRacePicker() { $("racePicker").classList.remove("show"); racePickerTarget = null; }
+
+function openRacePicker(playerId) {
+  const p = players.find(x => x.id === playerId);
   if (!p) return;
-  const next = RACE_CYCLE[p.race || "R"];
-  // 레거시 문자열 데이터(name만 있는 경우)도 안전하게 처리하기 위해
-  // name + race를 함께 써서 객체로 만들어 줍니다.
-  db.ref("players/" + id).update({
-    name: p.name,
-    race: next
-  })
-    .then(() => toast(`${p.name} → ${RACE_LABEL[next]}`))
+  racePickerTarget = playerId;
+  $("rpTitle").innerHTML = `${esc(p.name)} <span class="muted" style="font-weight:400;">· 종족 선택</span>`;
+  $("rpGrid").innerHTML = ["T","Z","P","R"].map(r =>
+    `<button class="rp-btn ${r===(p.race||"R")?"on":""}" data-race="${r}">${raceIcon(r,20)} ${RACE_LABEL[r]}</button>`
+  ).join("");
+  qsa("#rpGrid .rp-btn").forEach(b =>
+    b.addEventListener("click", () => setPlayerRace(racePickerTarget, b.dataset.race)));
+  $("racePicker").classList.add("show");
+}
+
+function setPlayerRace(id, race) {
+  const p = players.find(x => x.id === id);
+  closeRacePicker();
+  if (!p || (p.race || "R") === race) return;
+  // 레거시 문자열 데이터도 안전하게 객체로 바꿔 저장
+  db.ref("players/" + id).update({ name: p.name, race })
+    .then(() => toast(`${p.name} → ${RACE_LABEL[race]}`))
     .catch(err => toast("종족 변경 실패: " + err.message, true));
 }
 
@@ -771,44 +837,44 @@ function buildHelperTeams(mode) {
   const mmr = calcMMR(games);
   const last = lastGameTeams();
   const map = last ? last.map : {};
-  const half = Math.ceil(selected.length / 2);
+  const n = selected.length;
+  const half = Math.ceil(n / 2);
 
-  // 후보를 여러 번 만들어 '직전 동료 중복'이 가장 적은 구성을 고름
-  const TRIES = 600;
-  let best = null;
-  for (let t = 0; t < TRIES; t++) {
-    let A = [], B = [];
-    if (mode === "random") {
-      const sh = [...selected].sort(() => Math.random() - 0.5);
-      A = sh.slice(0, half);
-      B = sh.slice(half);
-    } else {
-      // MMR 균형: 점수 높은 순으로 훑되, 매번 합계가 낮은 팀에 넣기 (동점은 랜덤)
-      const sh = [...selected].sort(() => Math.random() - 0.5)
-                              .sort((a,b) => (mmr[b]||1000) - (mmr[a]||1000));
-      let sumA = 0, sumB = 0;
-      sh.forEach(n => {
-        const v = mmr[n] || 1000;
-        const canA = A.length < half, canB = B.length < (selected.length - half);
-        let toA;
-        if (!canB) toA = true;
-        else if (!canA) toA = false;
-        else if (sumA === sumB) toA = Math.random() < 0.5;
-        else toA = sumA < sumB;
-        if (toA) { A.push(n); sumA += v; } else { B.push(n); sumB += v; }
-      });
+  // 가능한 팀 조합을 만들어 평가 (16명 이하는 전수 탐색 → 진짜 최적 보장)
+  const cands = [];
+  const pushCand = set => {
+    const A = [], B = [];
+    for (let i = 0; i < n; i++) (set.has(i) ? A : B).push(selected[i]);
+    const sA = A.reduce((s,x) => s + (mmr[x]||1000), 0);
+    const sB = B.reduce((s,x) => s + (mmr[x]||1000), 0);
+    cands.push({ A, B, rep: countRepeatPairs(A, B, map), sA, sB, diff: Math.abs(sA - sB) });
+  };
+
+  if (n <= 16) {
+    for (let mask = 0; mask < (1 << n); mask++) {
+      let c = 0;
+      for (let i = 0; i < n; i++) if (mask & (1 << i)) c++;
+      if (c !== half) continue;
+      const set = new Set();
+      for (let i = 0; i < n; i++) if (mask & (1 << i)) set.add(i);
+      pushCand(set);
     }
-    const rep = countRepeatPairs(A, B, map);
-    const sA = A.reduce((s,n) => s + (mmr[n]||1000), 0);
-    const sB = B.reduce((s,n) => s + (mmr[n]||1000), 0);
-    const diff = Math.abs(sA - sB);
-    // 1순위: 직전 동료 중복 최소, 2순위: (균형모드면) MMR 격차 최소
-    const score = rep * 100000 + (mode === "balance" ? diff : 0);
-    if (!best || score < best.score) best = { A, B, rep, sA, sB, diff, score };
-    if (rep === 0 && (mode !== "balance" || diff === 0)) break;
+  } else {
+    for (let t = 0; t < 4000; t++) {
+      const idx = [...Array(n).keys()].sort(() => Math.random() - 0.5).slice(0, half);
+      pushCand(new Set(idx));
+    }
   }
 
-  const { A, B, rep, sA, sB } = best;
+  // 1순위: 직전 동료 중복 최소 → 2순위: MMR 격차 최소 → 남은 후보 중 무작위(매번 다른 조합)
+  const minRep = Math.min(...cands.map(c => c.rep));
+  let pool = cands.filter(c => c.rep === minRep);
+  if (mode === "balance") {
+    const minDiff = Math.min(...pool.map(c => c.diff));
+    pool = pool.filter(c => c.diff <= minDiff + 60);
+  }
+  const best = pool[Math.floor(Math.random() * pool.length)];
+  const { A, B, rep, sA, sB, diff } = best;
 
   let note = "";
   if (!last) {
@@ -816,24 +882,25 @@ function buildHelperTeams(mode) {
   } else if (rep === 0) {
     note = `<div class="mix-note ok">✅ 직전 경기(${esc(last.game.date||"")}) 같은 팀이었던 조합이 <b>하나도 없습니다</b>.</div>`;
   } else {
-    note = `<div class="mix-note warn">⚠️ 직전 경기(${esc(last.game.date||"")}) 동료가 다시 만난 짝: <b>${rep}쌍</b><br>
-      인원 구성상 완전히 피할 수 없어 <b>최소로 줄인 결과</b>입니다. (8명이 4대4로 다시 나뉘면 이론상 최소 4쌍 = 각자 직전 동료 1명씩)</div>`;
+    note = `<div class="mix-note warn">⚠️ 직전 경기(${esc(last.game.date||"")}) 동료가 다시 만난 짝: <b>${rep}쌍</b> <span class="muted">(가능한 모든 조합 중 최솟값)</span><br>
+      8명이 4대4로 다시 나뉘면 이론상 최소 4쌍(각자 직전 동료 1명씩)은 피할 수 없습니다.</div>`;
   }
 
-  const tag = n => map[n] ? `<span class="muted"> (직전 ${map[n]})</span>` : "";
+  const tag = n2 => map[n2] ? `<span class="muted"> (직전 ${map[n2]})</span>` : "";
 
   $("helperResult").innerHTML = `
     ${note}
     <div class="team-grid">
       <div class="team-col A">
         <h4>A팀 (${A.length}명)${mode==="balance"?` · 합계 ${Math.round(sA)}`:""}</h4>
-        ${A.map(n => `<div class="tp">${esc(n)}${tag(n)}</div>`).join("")}
+        ${A.map(x => `<div class="tp">${esc(x)}${tag(x)}</div>`).join("")}
       </div>
       <div class="team-col B">
         <h4>B팀 (${B.length}명)${mode==="balance"?` · 합계 ${Math.round(sB)}`:""}</h4>
-        ${B.map(n => `<div class="tp">${esc(n)}${tag(n)}</div>`).join("")}
+        ${B.map(x => `<div class="tp">${esc(x)}${tag(x)}</div>`).join("")}
       </div>
     </div>
+    ${mode==="balance" ? `<p class="muted" style="text-align:center;">MMR 격차 ${Math.round(diff)}점</p>` : ""}
     <p class="muted" style="text-align:center;">경기입력 탭에서 이 구성대로 배정해 주세요 · 버튼을 다시 누르면 다른 조합이 나옵니다</p>
   `;
 }
@@ -884,16 +951,37 @@ function renderAssignChips() {
   `;
 
   qsa("#assignList .chip").forEach(c => {
+    let timer = null, longFired = false;
+
+    const startPress = () => {
+      longFired = false;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        longFired = true;                     // 길게 누름 → 종족 변경
+        const p = players.find(x => x.name === c.dataset.name);
+        if (p) {
+          if (navigator.vibrate) navigator.vibrate(30);
+          openRacePicker(p.id);               // 1탭으로 종족 선택 (순환 아님)
+        }
+      }, 500);
+    };
+    const cancelPress = () => { clearTimeout(timer); timer = null; };
+
+    c.addEventListener("touchstart", startPress, { passive: true });
+    c.addEventListener("touchend", cancelPress);
+    c.addEventListener("touchmove", cancelPress);
+    c.addEventListener("touchcancel", cancelPress);
+    c.addEventListener("mousedown", startPress);
+    c.addEventListener("mouseup", cancelPress);
+    c.addEventListener("mouseleave", cancelPress);
+    c.addEventListener("contextmenu", e => e.preventDefault()); // 길게 눌러도 메뉴 안 뜨게
+
     c.addEventListener("click", () => {
+      cancelPress();
+      if (longFired) { longFired = false; return; }  // 방금 종족을 바꿨으면 팀은 그대로
       const name = c.dataset.name;
-      if (raceEditMode) {
-        const p = players.find(x => x.name === name);
-        if (p) cyclePlayerRace(p.id);   // 저장 후 재렌더는 DB 리스너가 처리
-        return;
-      }
       const cur = assign[name] || "";
-      const next = cur === "" ? "A" : cur === "A" ? "B" : "";
-      assign[name] = next;
+      assign[name] = cur === "" ? "A" : cur === "A" ? "B" : "";
       renderAssignChips();
     });
   });
@@ -1215,8 +1303,8 @@ function closeModal() {
 
 /* ===== 개정 사항 공지 ===== */
 const CHANGELOG = [
-  ["🧬 경기입력에서 종족 변경 가능",
-   "경기입력 탭의 <b>🎭 종족수정</b> 버튼을 켜면, 이름을 눌러 바로 종족을 바꿀 수 있습니다(T→Z→P→랜덤). 끝내기를 누르면 원래대로 팀 배정 모드로 돌아옵니다."],
+  ["🧬 종족 지정이 1탭으로 간단해짐",
+   "<b>선수 추가할 때</b> 종족을 바로 고를 수 있고, <b>선수관리</b>의 종족 버튼을 누르면 선택창이 뜹니다. 경기입력 화면에서도 이름을 <b>0.5초 길게</b> 누르면 선택창이 떠요(짧게 누르면 평소대로 팀 배정). 종족은 <b>한 번만 정해두면 계속 유지</b>되니 매 경기 건드릴 필요가 없습니다."],
   ["🧬 종족별 통계 추가",
    "랭킹 탭 맨 위에 종족별 인원·전적·승률·평균 MMR·평균 실력지수가 표시됩니다."],
   ["⚖️ 실력지수(Elo) 신설 — 팀빨 보정",
@@ -1364,7 +1452,7 @@ function renderManual() {
 
     <div class="man-block">
       <div class="mt">⑨ 팀 구성 도우미 (직전 동료 피하기)</div>
-      <div class="how"><b>MMR 균형</b>은 점수 합이 비슷하도록, <b>랜덤</b>은 무작위로 나눕니다. 여기에 더해 <b>직전 경기에서 같은 팀이었던 사람끼리는 다시 붙지 않도록</b> 여러 조합을 만들어보고 중복이 가장 적은 걸 골라줍니다. 남은 중복 수는 결과 위에 표시돼요.</div>
+      <div class="how"><b>MMR 균형</b>은 점수 합이 비슷하도록, <b>랜덤</b>은 무작위로 나눕니다. 여기에 더해 <b>가능한 모든 팀 조합을 전부 계산해</b>(16명 이하 전수 탐색) 직전 경기 동료가 겹치는 수가 <b>가장 적은 조합</b>을 고릅니다. 같은 조건의 후보가 여럿이면 그중 하나를 무작위로 뽑기 때문에, 버튼을 다시 누르면 다른 구성이 나옵니다.</div>
       <div class="man-why"><b>왜 이렇게?</b> 매번 같은 사람끼리 팀이 되면 재미도 떨어지고 전적도 편중되기 때문입니다.</div>
       <div class="man-prob"><b>한계 — 완전 차단은 수학적으로 불가능합니다.</b> 8명이 4대4로 나뉘었다가 다시 4대4가 되면, 직전 A팀 4명을 아무리 흩어도 어느 팀에는 2명 이상이 함께 들어갑니다(비둘기집 원리).</div>
       <div class="man-ex">예: 직전 A팀이 <b>강정훈·배재현·손용균·이선재</b>, B팀이 <b>권준엽·이동엽·박상필·손동환</b>이었다면, 이 8명을 다시 4대4로 짤 때 가장 잘 섞어도 각 팀은 <b>직전 A 2명 + 직전 B 2명</b>이 됩니다. 즉 팀마다 2쌍씩 <b>총 4쌍</b>(선수 1인당 직전 동료 1명)이 다시 같은 팀이 되는 게 <b>이론상 최선</b>이에요. 도우미는 여기까지 줄여줍니다. 버튼을 다시 누르면 같은 조건의 다른 조합이 나오고, 이 결과는 <b>저장되지 않으니</b> 경기입력 탭에서 직접 배정해야 합니다.</div>
@@ -1727,6 +1815,7 @@ function gameYear(g) { return (g.date || "").slice(0, 4); }
 function availableYears() {
   const set = new Set();
   games.forEach(g => { const y = gameYear(g); if (y) set.add(y); });
+  set.add(String(new Date().getFullYear())); // 올해는 경기가 없어도 항상 표시 (새해 첫날 대비)
   return [...set].sort((a,b) => b.localeCompare(a)); // 최신 연도 먼저
 }
 
@@ -1757,11 +1846,22 @@ function renderYearRank(year) {
   const isPast = year < thisYear;
   const champ = ranked && ranked.length ? ranked[0] : null;
 
+  if (!gs.length) {
+    $("yearSummary").innerHTML = `
+      <div class="year-champ">
+        <div class="ct">🗓️ ${year}년 시즌 시작 전</div>
+        <div><span class="muted">아직 ${year}년 경기 기록이 없습니다. 첫 경기를 저장하면 여기에 ${year}년 순위가 만들어집니다.</span></div>
+        <div class="year-locked">새해가 되면 전원 1000점에서 다시 시작하고, 지난 연도 기록은 그대로 보존됩니다.</div>
+      </div>`;
+    $("yearRankList").innerHTML = "";
+    return;
+  }
+
   $("yearSummary").innerHTML = `
     <div class="year-champ">
       <div class="ct">${isPast ? "🏆 " + year + "년 최종 챔피언 (확정)" : "🏆 " + year + "년 현재 1위 (진행 중)"}</div>
       <div>${champ
-        ? `${raceIcon(champ.race,16)} <b>${esc(champ.name)}</b> · MMR ${champ.mmr} · ${champ.win}승 ${champ.lose}패`
+        ? `${raceIcon(champ.race,16)} <b>${esc(champ.name)}</b> · MMR ${champ.mmr} · 실력 ${champ.elo} · ${champ.win}승 ${champ.lose}패`
         : `<span class="muted">${MIN_GAMES}경기 이상 뛴 선수가 없어 순위 미확정</span>`}</div>
       <div class="year-locked">${year}년 경기 <b>${gs.length}</b>판 기준 · 모두 1000점에서 시작해 이 해 경기만 반영${isPast ? " · 지난 연도라 기록 고정" : ""}</div>
     </div>
