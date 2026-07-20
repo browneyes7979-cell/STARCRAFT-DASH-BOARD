@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -13,8 +12,8 @@
            justify-content: space-between; align-items: center; }
   header .who { font-size: 13px; opacity: .85; }
   .tabs { display: flex; background: #222; position: sticky; top: 0; z-index: 10; }
-  .tabs button { flex: 1; padding: 12px 6px; color: #fff; border: none;
-                 background: transparent; font-size: 14px; cursor: pointer; }
+  .tabs button { flex: 1; padding: 12px 2px; color: #fff; border: none;
+                 background: transparent; font-size: 13px; cursor: pointer; white-space: nowrap; }
   .tabs button.active { background: #ff6600; font-weight: 600; }
   .page { display: none; padding: 10px; }
   .page.active { display: block; }
@@ -169,6 +168,50 @@
 
   .version { font-size: 10px; color: #aaa; text-align: center; padding: 6px; }
 
+  /* 연도별 */
+  .year-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .year-btns button { width: auto; flex: 0 0 auto; padding: 8px 16px; font-size: 13px;
+                      margin: 0; background: #eee; color: #444; border-radius: 20px; }
+  .year-btns button.on { background: #ff6600; color: #fff; }
+  .year-champ { padding: 12px; background: linear-gradient(135deg,#fff8e1,#ffecb3);
+                border-left: 4px solid gold; border-radius: 8px; margin-bottom: 10px;
+                font-size: 14px; line-height: 1.6; }
+  .year-champ .ct { font-weight: 700; color: #b7791f; font-size: 13px; margin-bottom: 2px; }
+  .year-locked { font-size: 11px; color: #888; margin-top: 4px; }
+
+  /* 팀 도우미 결과 */
+  .mix-note { font-size: 12px; border-radius: 6px; padding: 8px 10px; margin: 8px 0; line-height: 1.6; }
+  .mix-note.ok { background: #eafaf1; border-left: 4px solid #27ae60; color: #1e6b45; }
+  .mix-note.warn { background: #fff3cd; border-left: 4px solid #f39c12; color: #7d5a00; }
+
+  /* 정렬 버튼 */
+  .sort-btns { display: flex; gap: 5px; margin-bottom: 10px; }
+  .sort-btns button { width: auto; flex: 1; padding: 8px 4px; font-size: 11.5px; margin: 0;
+                      background: #eee; color: #555; border-radius: 6px; font-weight: 600; }
+  .sort-btns button.on { background: #ff6600; color: #fff; }
+  .rank-row .nm .sub { font-size: 11px; color: #999; font-weight: 400; margin-top: 2px; }
+  .rank-row .sc { line-height: 1.5; }
+  .rank-row .sc .hi { color: #ff6600; }
+
+  /* 종족별 통계 */
+  .race-stat { padding: 10px 12px; background: #f7f9fc; border-left: 4px solid #4a6fa5;
+               border-radius: 6px; margin: 6px 0; }
+  .race-stat .rs-head { display: flex; align-items: center; gap: 6px; font-size: 14px; margin-bottom: 4px; }
+  .race-stat .rs-body { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+
+  /* 개정 공지 */
+  #newsModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55);
+               z-index: 200; overflow-y: auto; }
+  #newsModal.show { display: block; }
+  #newsModal .inner { background: #fff; width: 92%; max-width: 540px; margin: 30px auto;
+                      border-radius: 12px; padding: 18px; max-height: 88vh; overflow-y: auto; }
+  #newsModal h2 { margin: 0 0 4px; font-size: 19px; }
+  .news-date { font-size: 12px; color: #888; margin-bottom: 10px; }
+  .news-item { border-left: 3px solid #ff6600; padding: 8px 12px; margin: 8px 0;
+               background: #fff8f2; border-radius: 0 6px 6px 0; }
+  .news-item .ni-t { font-weight: 700; font-size: 14px; margin-bottom: 3px; }
+  .news-item .ni-d { font-size: 13px; color: #444; line-height: 1.6; }
+
   /* 설명서 아이콘 & 모달 */
   .icon-btn { width: auto; padding: 3px 9px; font-size: 15px; margin: 0 0 0 8px;
               background: #444; border: none; border-radius: 6px; line-height: 1.4; }
@@ -233,7 +276,7 @@
 
 <div id="app" style="display:none;">
   <header>
-    <div><b>스타 대시보드</b> <button id="btnManual" class="icon-btn" title="통계 계산 방식 설명서">📖</button></div>
+    <div><b>스타 대시보드</b> <button id="btnManual" class="icon-btn" title="통계 계산 방식 설명서">📖</button> <button id="btnNews" class="icon-btn" title="개정 사항">📢</button></div>
     <div class="who">
       <span id="userName"></span>
       <button id="btnLogout" class="secondary" style="width:auto; padding:4px 10px; font-size:12px; margin-left:8px;">로그아웃</button>
@@ -243,7 +286,8 @@
   <div class="tabs">
     <button data-tab="players" class="active">선수관리</button>
     <button data-tab="game">경기입력</button>
-    <button data-tab="rank">랭킹</button>
+    <button data-tab="rank">통산랭킹</button>
+    <button data-tab="years">연도별</button>
   </div>
 
   <div id="players" class="page active">
@@ -260,7 +304,7 @@
     </div>
     <div class="card">
       <h3>🎯 팀 구성 도우미</h3>
-      <p class="muted" style="margin:0 0 8px 0;">참가할 선수를 골라 팀을 추천받으세요 (저장 안 됨)</p>
+      <p class="muted" style="margin:0 0 8px 0;">참가할 선수를 골라 팀을 추천받으세요 · <b>직전 경기 같은 팀이었던 사람끼리는 최대한 안 붙게</b> 섞습니다 (저장 안 됨)</p>
       <div id="helperSelect" class="checklist"></div>
       <div class="flex" style="margin-top:8px;">
         <button id="btnHelperBalance" class="secondary">⚖️ MMR 균형</button>
@@ -282,11 +326,16 @@
 
       <h4>팀 배정 <span class="muted" id="assignHint"></span></h4>
       <p class="muted" style="margin:0 0 6px 0; font-size:12px;">이름을 누르면 미참여 → A팀 → B팀 → 미참여 순환</p>
+      <div id="raceModeBanner" class="edit-banner" style="display:none; background:#e8f4fd; border-left-color:#2980b9;">
+        <div>🎭 <b style="color:#1a5276;">종족 수정 모드</b> <span class="muted">이름을 누르면 팀이 아니라 종족이 바뀝니다 (T→Z→P→랜덤)</span></div>
+        <button id="btnExitRaceMode">끝내기</button>
+      </div>
       <div id="assignList"></div>
 
       <div class="tools-row">
+        <button id="btnRaceMode" class="secondary tool-btn">🎭 종족수정</button>
         <button id="btnSwapTeams" class="secondary tool-btn">🔄 A↔B 교체</button>
-        <button id="btnCopyLast" class="secondary tool-btn">↩️ 직전 경기 복사</button>
+        <button id="btnCopyLast" class="secondary tool-btn">↩️ 직전 복사</button>
         <button id="btnClearAssign" class="secondary tool-btn">🗑️ 초기화</button>
       </div>
 
@@ -311,13 +360,27 @@
       <div id="clubStats"></div>
     </div>
     <div class="card">
-      <h3>랭킹 (MMR 기준)</h3>
-      <p class="muted" style="margin:0 0 8px 0;">최소 5경기부터 순위 반영 · 이름을 누르면 상세 통계 + 경기 기록 수정/삭제</p>
+      <h3>🧬 종족별 통계</h3>
+      <div id="raceStats"></div>
+    </div>
+    <div class="card">
+      <h3>랭킹 (통산)</h3>
+      <p class="muted" style="margin:0 0 8px 0;">최소 5경기부터 순위 반영 · 정렬 기준을 바꿔 볼 수 있어요 · 이름을 누르면 상세 통계</p>
       <div id="rankList"></div>
     </div>
   </div>
 
-  <div class="version">v2026-07-02-b (랭킹 게이트+보정승률+종족표시 · 설명서 추가) — 이 줄이 안 보이면 구버전입니다</div>
+  <div id="years" class="page">
+    <div class="card">
+      <h3>📅 연도별 랭킹</h3>
+      <p class="muted" style="margin:0 0 8px 0;">해당 연도 경기만으로 MMR을 새로 계산합니다 (매년 1000점에서 리셋)</p>
+      <div id="yearBtns" class="year-btns"></div>
+      <div id="yearSummary"></div>
+      <div id="yearRankList"></div>
+    </div>
+  </div>
+
+  <div class="version">v2026-07-20 (실력지수 Elo · 종족수정/종족통계 · 연도별 랭킹 · 직전동료 회피 · 개정공지) — 이 줄이 안 보이면 구버전입니다</div>
 </div>
 
 <div id="playerModal">
@@ -331,6 +394,13 @@
   <div class="inner">
     <button id="btnCloseManual" class="secondary" style="width:auto; padding:4px 12px; float:right; font-size:12px;">닫기</button>
     <div id="manualBody"></div>
+  </div>
+</div>
+
+<div id="newsModal">
+  <div class="inner">
+    <div id="newsBody"></div>
+    <button id="btnCloseNews" style="margin-top:10px;">확인했습니다</button>
   </div>
 </div>
 
@@ -359,8 +429,10 @@ const esc = s => String(s).replace(/[&<>"']/g, c =>
   ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 
 /* ===== 랭킹 규칙 (여기 숫자만 바꾸면 조정됩니다) ===== */
+const APP_VERSION = "2026-07-20";
 const MIN_GAMES = 5;               // 이 경기 수 미만이면 순위 제외 ("배치 중")
 const PRIOR_W = 5, PRIOR_L = 5;    // 보정 승률용 가상 전적 (클수록 50%로 더 끌어당김)
+const ELO_K = 24;                  // 실력지수 반영 강도
 // 보정 승률: 가상 5승5패를 미리 깔고 실제 전적을 얹어 계산 → 표본 적으면 50% 근처로 수렴
 function adjRate(win, lose) {
   return (win + PRIOR_W) / (win + lose + PRIOR_W + PRIOR_L);
@@ -512,6 +584,7 @@ auth.onAuthStateChanged(user => {
     $("userName").textContent = user.isAnonymous ? "👤 게스트"
                               : (user.displayName || user.email || "로그인됨");
     bootData();
+    maybeShowNews();
   } else {
     $("loginBox").style.display = "block";
     $("app").style.display = "none";
@@ -534,6 +607,17 @@ let games = [];
 let assign = {};
 let editingGameId = null;
 let currentModalPlayer = null;
+let raceEditMode = false;
+
+function setRaceMode(on) {
+  raceEditMode = on;
+  $("raceModeBanner").style.display = on ? "flex" : "none";
+  $("btnRaceMode").textContent = on ? "✅ 종족수정 중" : "🎭 종족수정";
+  $("btnRaceMode").style.background = on ? "#2980b9" : "";
+  renderAssignChips();
+}
+$("btnRaceMode").addEventListener("click", () => setRaceMode(!raceEditMode));
+$("btnExitRaceMode").addEventListener("click", () => setRaceMode(false));
 
 $("date").value = new Date().toISOString().split("T")[0];
 $("date").addEventListener("change", renderDayGames);
@@ -560,6 +644,7 @@ function bootData() {
       if (v && v.teams && v.winner) games.push({ id: c.key, ...v });
     });
     renderRank();
+    renderYearTabs();
     renderClubStats();
     renderDayGames();
     if (currentModalPlayer) openPlayerModal(currentModalPlayer);
@@ -655,37 +740,101 @@ function renderHelperSelect() {
 $("btnHelperBalance").addEventListener("click", () => buildHelperTeams("balance"));
 $("btnHelperRandom").addEventListener("click", () => buildHelperTeams("random"));
 
+/* 직전 경기(가장 최근 저장된 경기)의 팀 구성 */
+function lastGameTeams() {
+  const sorted = sortedGames(games);
+  const last = sorted[sorted.length - 1];
+  if (!last) return null;
+  const map = {};
+  (last.teams.A||[]).forEach(n => map[n] = "A");
+  (last.teams.B||[]).forEach(n => map[n] = "B");
+  return { map, game: last };
+}
+
+/* 같은 팀 안에 '직전 경기에도 같은 팀이었던' 짝이 몇 쌍인지 */
+function countRepeatPairs(A, B, map) {
+  let cnt = 0;
+  [A, B].forEach(team => {
+    for (let i = 0; i < team.length; i++) {
+      for (let j = i+1; j < team.length; j++) {
+        if (map[team[i]] && map[team[i]] === map[team[j]]) cnt++;
+      }
+    }
+  });
+  return cnt;
+}
+
 function buildHelperTeams(mode) {
   const selected = qsa("#helperSelect input:checked").map(i => i.value);
   if (selected.length < 2) return toast("2명 이상 선택하세요", true);
 
-  let A = [], B = [];
-  if (mode === "random") {
-    const shuffled = [...selected].sort(() => Math.random() - 0.5);
-    const half = Math.ceil(shuffled.length / 2);
-    A = shuffled.slice(0, half);
-    B = shuffled.slice(half);
-  } else {
-    const mmr = calcMMR(games);
-    const ranked = [...selected].sort((a,b) => {
-      const d = (mmr[b]||1000) - (mmr[a]||1000);
-      return d !== 0 ? d : Math.random() - 0.5;
-    });
-    ranked.forEach((p, i) => (i % 2 === 0 ? A : B).push(p));
+  const mmr = calcMMR(games);
+  const last = lastGameTeams();
+  const map = last ? last.map : {};
+  const half = Math.ceil(selected.length / 2);
+
+  // 후보를 여러 번 만들어 '직전 동료 중복'이 가장 적은 구성을 고름
+  const TRIES = 600;
+  let best = null;
+  for (let t = 0; t < TRIES; t++) {
+    let A = [], B = [];
+    if (mode === "random") {
+      const sh = [...selected].sort(() => Math.random() - 0.5);
+      A = sh.slice(0, half);
+      B = sh.slice(half);
+    } else {
+      // MMR 균형: 점수 높은 순으로 훑되, 매번 합계가 낮은 팀에 넣기 (동점은 랜덤)
+      const sh = [...selected].sort(() => Math.random() - 0.5)
+                              .sort((a,b) => (mmr[b]||1000) - (mmr[a]||1000));
+      let sumA = 0, sumB = 0;
+      sh.forEach(n => {
+        const v = mmr[n] || 1000;
+        const canA = A.length < half, canB = B.length < (selected.length - half);
+        let toA;
+        if (!canB) toA = true;
+        else if (!canA) toA = false;
+        else if (sumA === sumB) toA = Math.random() < 0.5;
+        else toA = sumA < sumB;
+        if (toA) { A.push(n); sumA += v; } else { B.push(n); sumB += v; }
+      });
+    }
+    const rep = countRepeatPairs(A, B, map);
+    const sA = A.reduce((s,n) => s + (mmr[n]||1000), 0);
+    const sB = B.reduce((s,n) => s + (mmr[n]||1000), 0);
+    const diff = Math.abs(sA - sB);
+    // 1순위: 직전 동료 중복 최소, 2순위: (균형모드면) MMR 격차 최소
+    const score = rep * 100000 + (mode === "balance" ? diff : 0);
+    if (!best || score < best.score) best = { A, B, rep, sA, sB, diff, score };
+    if (rep === 0 && (mode !== "balance" || diff === 0)) break;
   }
 
+  const { A, B, rep, sA, sB } = best;
+
+  let note = "";
+  if (!last) {
+    note = `<div class="mix-note warn">이전 경기 기록이 없어 섞기 규칙은 적용되지 않았습니다.</div>`;
+  } else if (rep === 0) {
+    note = `<div class="mix-note ok">✅ 직전 경기(${esc(last.game.date||"")}) 같은 팀이었던 조합이 <b>하나도 없습니다</b>.</div>`;
+  } else {
+    note = `<div class="mix-note warn">⚠️ 직전 경기(${esc(last.game.date||"")}) 동료가 다시 만난 짝: <b>${rep}쌍</b><br>
+      인원 구성상 완전히 피할 수 없어 <b>최소로 줄인 결과</b>입니다. (8명이 4대4로 다시 나뉘면 이론상 최소 4쌍 = 각자 직전 동료 1명씩)</div>`;
+  }
+
+  const tag = n => map[n] ? `<span class="muted"> (직전 ${map[n]})</span>` : "";
+
   $("helperResult").innerHTML = `
+    ${note}
     <div class="team-grid">
       <div class="team-col A">
-        <h4>A팀 (${A.length}명)</h4>
-        ${A.map(n => `<div class="tp">${esc(n)}</div>`).join("")}
+        <h4>A팀 (${A.length}명)${mode==="balance"?` · 합계 ${Math.round(sA)}`:""}</h4>
+        ${A.map(n => `<div class="tp">${esc(n)}${tag(n)}</div>`).join("")}
       </div>
       <div class="team-col B">
-        <h4>B팀 (${B.length}명)</h4>
-        ${B.map(n => `<div class="tp">${esc(n)}</div>`).join("")}
+        <h4>B팀 (${B.length}명)${mode==="balance"?` · 합계 ${Math.round(sB)}`:""}</h4>
+        ${B.map(n => `<div class="tp">${esc(n)}${tag(n)}</div>`).join("")}
       </div>
     </div>
-    <p class="muted" style="text-align:center;">경기입력 탭에서 이 구성대로 배정해 주세요</p>
+    <p class="muted" style="text-align:center;">경기입력 탭에서 이 구성대로 배정해 주세요 · 버튼을 다시 누르면 다른 조합이 나옵니다</p>
   `;
 }
 
@@ -737,6 +886,11 @@ function renderAssignChips() {
   qsa("#assignList .chip").forEach(c => {
     c.addEventListener("click", () => {
       const name = c.dataset.name;
+      if (raceEditMode) {
+        const p = players.find(x => x.name === name);
+        if (p) cyclePlayerRace(p.id);   // 저장 후 재렌더는 DB 리스너가 처리
+        return;
+      }
       const cur = assign[name] || "";
       const next = cur === "" ? "A" : cur === "A" ? "B" : "";
       assign[name] = next;
@@ -966,6 +1120,26 @@ function calcMMR(data) {
   return mmr;
 }
 
+/* 실력지수 (Elo) — 팀 평균 실력을 비교해, 이길 만한 경기를 이기면 조금 / 어려운 경기를 이기면 많이 */
+function calcElo(data) {
+  const R = {};
+  const BASE = 1000;
+  const ensure = n => { if (R[n] === undefined) R[n] = BASE; };
+  sortedGames(data).forEach(g => {
+    const A = g.teams.A || [], B = g.teams.B || [];
+    if (!A.length || !B.length) return;
+    A.forEach(ensure); B.forEach(ensure);
+    const rA = A.reduce((s,n) => s + R[n], 0) / A.length;
+    const rB = B.reduce((s,n) => s + R[n], 0) / B.length;
+    const eA = 1 / (1 + Math.pow(10, (rB - rA) / 400)); // A팀 예상 승률
+    const eB = 1 - eA;
+    const sA = g.winner === "A" ? 1 : 0, sB = 1 - sA;
+    A.forEach(n => R[n] += ELO_K * (sA - eA));
+    B.forEach(n => R[n] += ELO_K * (sB - eB));
+  });
+  return R;
+}
+
 function calcMMRHistory(data, name) {
   const hist = [];
   let cur = 1000;
@@ -1039,6 +1213,54 @@ function closeModal() {
   $("playerModal").classList.remove("show");
 }
 
+/* ===== 개정 사항 공지 ===== */
+const CHANGELOG = [
+  ["🧬 경기입력에서 종족 변경 가능",
+   "경기입력 탭의 <b>🎭 종족수정</b> 버튼을 켜면, 이름을 눌러 바로 종족을 바꿀 수 있습니다(T→Z→P→랜덤). 끝내기를 누르면 원래대로 팀 배정 모드로 돌아옵니다."],
+  ["🧬 종족별 통계 추가",
+   "랭킹 탭 맨 위에 종족별 인원·전적·승률·평균 MMR·평균 실력지수가 표시됩니다."],
+  ["⚖️ 실력지수(Elo) 신설 — 팀빨 보정",
+   "기존 MMR은 상대가 강하든 약하든 이기면 무조건 +10이라 <b>강팀에 편승한 성적</b>을 걸러내지 못했습니다. 실력지수는 <b>양 팀 실력차로 예상 승률을 먼저 계산</b>해서, 이길 만한 경기를 이기면 조금 오르고 어려운 경기를 이기면 많이 오릅니다. 랭킹 탭의 정렬 버튼으로 <b>MMR / 실력지수 / 보정 승률</b>을 바꿔 볼 수 있어요."],
+  ["📅 연도별 랭킹 탭",
+   "그 해 경기만으로 전원 1000점부터 다시 계산합니다. 지난 연도는 기록이 고정되어 챔피언이 확정 표시됩니다."],
+  ["🎲 팀 구성 도우미 — 직전 동료 회피",
+   "MMR 균형·랜덤 모두 <b>직전 경기에서 같은 팀이었던 사람끼리 최대한 안 붙도록</b> 섞습니다. (8명이 4대4로 다시 나뉘면 이론상 최소 4쌍은 겹치므로 완전 차단은 불가능하며, 그 최소값까지 줄여줍니다.)"],
+  ["🏅 최소 5경기 순위 게이트 + 보정 승률",
+   "5경기 미만은 순위에서 빼고 <b>배치 중</b>으로 표시합니다. 또 표본이 적을 때 승률이 튀는 걸 막기 위해 가상 5승5패를 더한 <b>보정 승률</b>을 함께 보여줍니다(1승 0패도 100%가 아니라 약 55%)."],
+  ["📖 계산 방식 설명서",
+   "상단 <b>📖</b> 아이콘을 누르면 모든 지표의 계산식·도입 배경·한계를 예시와 함께 볼 수 있습니다."]
+];
+
+$("btnNews").addEventListener("click", () => openNews(true));
+$("btnCloseNews").addEventListener("click", closeNews);
+$("newsModal").addEventListener("click", e => { if (e.target.id === "newsModal") closeNews(); });
+
+function closeNews() {
+  $("newsModal").classList.remove("show");
+  try { localStorage.setItem("seenVersion", APP_VERSION); } catch (e) {}
+}
+function openNews(manual) {
+  $("newsBody").innerHTML = `
+    <h2>📢 대시보드 개정 안내</h2>
+    <div class="news-date">버전 ${APP_VERSION} · 랭킹 계산 방식이 바뀌었습니다</div>
+    ${CHANGELOG.map(([t,d]) => `
+      <div class="news-item"><div class="ni-t">${t}</div><div class="ni-d">${d}</div></div>
+    `).join("")}
+    <div class="man-intro" style="background:#eef7ee; color:#1e5631; margin-top:10px;">
+      <b>경기 기록은 그대로입니다.</b> 계산 방식만 바뀌었고 저장된 경기는 손대지 않았어요.
+      자세한 계산식은 상단 <b>📖</b> 설명서에서 확인하세요.
+    </div>
+  `;
+  $("newsModal").classList.add("show");
+  const inner = $("newsModal").querySelector(".inner");
+  if (inner) inner.scrollTop = 0;
+}
+function maybeShowNews() {
+  let seen = null;
+  try { seen = localStorage.getItem("seenVersion"); } catch (e) {}
+  if (seen !== APP_VERSION) openNews(false);
+}
+
 /* ===== 사용설명서 (통계 계산 방식) ===== */
 $("btnManual").addEventListener("click", openManual);
 $("btnCloseManual").addEventListener("click", closeManual);
@@ -1070,6 +1292,16 @@ function renderManual() {
       <div class="man-why"><b>왜 이렇게?</b> 팀 게임이라 개인 실력을 정밀히 못 재니, "많이 나와서 많이 이긴 사람이 올라간다"는 <b>단순·투명</b>한 규칙으로 뒀습니다. 참석과 승리를 함께 보상하는 취지예요.</div>
       <div class="man-prob"><b>한계</b> — 상대가 강하든 약하든 똑같이 ±10입니다. 실력 격차가 반영되지 않아요.</div>
       <div class="man-ex">예: <b>김성은</b>이 늘 약한 팀만 상대로 이겨서 20승, <b>강정훈</b>이 늘 강팀과 붙어 20승이면 <b>둘 다 +200점으로 동일</b>. 실제 실력차가 순위에 안 나타납니다. (정통 Elo로 바꾸면 해결되지만 규칙이 복잡해짐)</div>
+    </div>
+
+    <div class="man-block">
+      <div class="mt">①-2 실력지수 (Elo) — 팀빨 보정</div>
+      <div class="how">경기 전에 <b>양 팀 평균 점수로 예상 승률을 먼저 계산</b>하고, 그 예상을 얼마나 뛰어넘었는지로 점수를 줍니다.</div>
+      <span class="man-formula">예상 승률 = 1 ÷ (1 + 10^((상대팀 평균 − 우리팀 평균) ÷ 400))
+점수 변화 = ${ELO_K} × (실제 결과 − 예상 승률)</span>
+      <div class="man-why"><b>왜 이렇게?</b> MMR의 가장 큰 불만이 <b>"강팀에 껴서 이겨도 똑같이 +10"</b>이었습니다. 실력지수는 <b>이길 만한 경기를 이기면 조금</b>, <b>어려운 경기를 이기면 많이</b> 올려주고, 반대로 <b>이길 만한 경기를 지면 많이 깎습니다</b>. 그래서 팀 운으로 쌓은 성적이 걸러집니다.</div>
+      <div class="man-prob"><b>한계</b> — 4대4라 팀 전체 결과를 개인에게 <b>똑같이 나눠</b> 줍니다. 한 경기 안에서 누가 캐리했는지는 여전히 구분하지 못해요. 또 점수가 안정되려면 경기 수가 꽤 쌓여야 합니다.</div>
+      <div class="man-ex">예: 우리 팀 평균 1150 vs 상대 900이면 예상 승률은 약 <b>81%</b>입니다. 여기서 이겨도 ${ELO_K} × (1 − 0.81) ≈ <b>+5점</b>뿐이지만, <b>지면</b> ${ELO_K} × (0 − 0.81) ≈ <b>−19점</b>입니다. 반대로 약팀에서 강팀을 잡으면 <b>+19점</b>을 받아요. <b>새로 들어와 강팀에 껴서 연승한 사람</b>은 MMR은 빠르게 오르지만 실력지수는 천천히 오릅니다 — 이게 두 지표를 나눠 놓은 이유입니다.</div>
     </div>
 
     <div class="man-block">
@@ -1119,6 +1351,23 @@ function renderManual() {
       <div class="man-why"><b>왜 이렇게?</b> 모임의 재미 요소(누가 요즘 잘나가나, 찰떡 콤비는 누구인가)를 보여주려고요.</div>
       <div class="man-prob"><b>한계</b> — MVP는 <b>많이 나온 사람이 유리</b>(참석 편향), 최강 듀오는 3경기만 넘으면 뽑혀 표본이 작을 수 있습니다.</div>
       <div class="man-ex">예: 매번 나오는 <b>배재현</b>이 승률은 평범해도 절대 승수가 많아 "최근 20경기 MVP(11승)"가 될 수 있어요. 승률과는 별개의 지표입니다.</div>
+    </div>
+
+    <div class="man-block">
+      <div class="mt">⑧ 연도별 랭킹 (매년 리셋)</div>
+      <div class="how">"연도별" 탭은 <b>그 해에 치른 경기만</b> 골라내 모두가 다시 1000점에서 시작한 것처럼 MMR을 새로 계산합니다. 통산랭킹 탭은 예전처럼 <b>전체 기간</b> 누적이에요. 둘은 서로 영향을 주지 않습니다.</div>
+      <span class="man-formula">연도 MMR = 1000 + (그 해 이긴 판 − 그 해 진 판) × 10</span>
+      <div class="man-why"><b>왜 이렇게?</b> 누적만 보면 예전에 쌓아둔 점수 때문에 순위가 굳어버립니다. 매년 리셋하면 <b>올해 잘하는 사람</b>이 드러나고, 지난 연도는 그 해 성적으로 <b>그대로 박제(고정)</b>돼 기록으로 남아요.</div>
+      <div class="man-prob"><b>한계</b> — 연초에는 표본이 적어 순위가 요동칩니다(그래서 여기에도 ${MIN_GAMES}경기 게이트와 보정 승률이 똑같이 적용됩니다). 또 12월 31일과 1월 1일 사이에 실력이 변한 것도 아닌데 점수가 초기화돼요.</div>
+      <div class="man-ex">예: 통산 1위여도 올해 3판만 뛰었다면 <b>2026년 탭에서는 "배치 중"</b>으로 빠집니다. 지난 연도 탭은 경기를 새로 넣지 않는 한 숫자가 변하지 않아요(과거 경기를 수정/삭제하면 그 해 기록도 함께 다시 계산됩니다).</div>
+    </div>
+
+    <div class="man-block">
+      <div class="mt">⑨ 팀 구성 도우미 (직전 동료 피하기)</div>
+      <div class="how"><b>MMR 균형</b>은 점수 합이 비슷하도록, <b>랜덤</b>은 무작위로 나눕니다. 여기에 더해 <b>직전 경기에서 같은 팀이었던 사람끼리는 다시 붙지 않도록</b> 여러 조합을 만들어보고 중복이 가장 적은 걸 골라줍니다. 남은 중복 수는 결과 위에 표시돼요.</div>
+      <div class="man-why"><b>왜 이렇게?</b> 매번 같은 사람끼리 팀이 되면 재미도 떨어지고 전적도 편중되기 때문입니다.</div>
+      <div class="man-prob"><b>한계 — 완전 차단은 수학적으로 불가능합니다.</b> 8명이 4대4로 나뉘었다가 다시 4대4가 되면, 직전 A팀 4명을 아무리 흩어도 어느 팀에는 2명 이상이 함께 들어갑니다(비둘기집 원리).</div>
+      <div class="man-ex">예: 직전 A팀이 <b>강정훈·배재현·손용균·이선재</b>, B팀이 <b>권준엽·이동엽·박상필·손동환</b>이었다면, 이 8명을 다시 4대4로 짤 때 가장 잘 섞어도 각 팀은 <b>직전 A 2명 + 직전 B 2명</b>이 됩니다. 즉 팀마다 2쌍씩 <b>총 4쌍</b>(선수 1인당 직전 동료 1명)이 다시 같은 팀이 되는 게 <b>이론상 최선</b>이에요. 도우미는 여기까지 줄여줍니다. 버튼을 다시 누르면 같은 조건의 다른 조합이 나오고, 이 결과는 <b>저장되지 않으니</b> 경기입력 탭에서 직접 배정해야 합니다.</div>
     </div>
 
     <div class="man-intro" style="background:#eef7ee; color:#1e5631;">
@@ -1278,7 +1527,8 @@ function openPlayerModal(name) {
     <div class="stat-row"><span>전적</span><b>${s.win}승 ${s.lose}패 (${total}경기)</b></div>
     <div class="stat-row"><span>승률 (실제)</span><b>${rate}%</b></div>
     <div class="stat-row"><span>보정 승률 <span class="muted">(가상 5승5패 반영)</span></span><b>${adj}%</b></div>
-    <div class="stat-row"><span>MMR</span><b>${Math.round(mmr[name]||1000)}</b></div>
+    <div class="stat-row"><span>MMR <span class="muted">(참석+승리)</span></span><b>${Math.round(mmr[name]||1000)}</b></div>
+    <div class="stat-row"><span>실력지수 <span class="muted">(팀빨 보정 Elo)</span></span><b>${Math.round(calcElo(games)[name]||1000)}</b></div>
     <div class="stat-row"><span>현재 기록</span><b>${curStreakText}</b></div>
     <div class="stat-row"><span>최장 연승 / 연패</span><b>${streak.longestW} / ${streak.longestL}</b></div>
 
@@ -1332,42 +1582,65 @@ function openPlayerModal(name) {
   });
 }
 
-/* 랭킹 */
-function renderRank() {
-  const mmr = calcMMR(games);
-  const stats = buildStats(games);
-  const all = players.map(p => {
+/* 랭킹 (통산 / 연도별 공용) */
+let sortMode = "mmr"; // mmr | elo | adj
+
+const SORT_LABEL = { mmr: "MMR (참석+승리)", elo: "실력지수 (팀빨 보정)", adj: "보정 승률" };
+
+function sortBtnsHtml(cls) {
+  return `<div class="sort-btns">` + Object.keys(SORT_LABEL).map(k =>
+    `<button class="${cls} ${k===sortMode?"on":""}" data-sort="${k}">${SORT_LABEL[k]}</button>`
+  ).join("") + `</div>`;
+}
+
+// gs: 대상 경기 목록. hideZero: 해당 기간 0경기인 선수는 아예 숨김(연도별용)
+function rankListHtml(gs, hideZero) {
+  const mmr = calcMMR(gs);
+  const elo = calcElo(gs);
+  const stats = buildStats(gs);
+  let all = players.map(p => {
     const s = stats[p.name] || { win:0, lose:0 };
     const total = s.win + s.lose;
     return {
       name: p.name,
       race: p.race || "R",
       mmr: Math.round(mmr[p.name] || 1000),
+      elo: Math.round(elo[p.name] || 1000),
       win: s.win,
       lose: s.lose,
       total,
       adj: total ? adjRate(s.win, s.lose) : 0
     };
   });
+  if (hideZero) all = all.filter(x => x.total > 0);
 
-  // 5경기 이상: 순위 반영 (MMR 순), 5경기 미만: 배치 중
-  const ranked = all.filter(x => x.total >= MIN_GAMES)
-                    .sort((a,b) => b.mmr - a.mmr || b.adj - a.adj);
+  const byMode = (a,b) => {
+    if (sortMode === "elo") return b.elo - a.elo || b.mmr - a.mmr;
+    if (sortMode === "adj") return b.adj - a.adj || b.total - a.total;
+    return b.mmr - a.mmr || b.adj - a.adj;
+  };
+
+  // 5경기 이상: 순위 반영, 5경기 미만: 배치 중
+  const ranked = all.filter(x => x.total >= MIN_GAMES).sort(byMode);
   const provisional = all.filter(x => x.total < MIN_GAMES)
                          .sort((a,b) => b.total - a.total || a.name.localeCompare(b.name,"ko"));
 
-  if (!all.length) {
-    $("rankList").innerHTML = '<div class="empty">데이터 없음</div>';
-    return;
-  }
+  if (!all.length) return { html: '<div class="empty">데이터 없음</div>', ranked };
+
+  const hi = (k, txt) => sortMode === k ? `<b class="hi">${txt}</b>` : txt;
 
   let html = "";
   if (ranked.length) {
     html += ranked.map((x,i) => `
       <div class="rank-row ${i<3?"top"+(i+1):""}" data-name="${esc(x.name)}">
         <div class="rk">${i+1}</div>
-        <div class="nm">${raceIcon(x.race,15)} ${esc(x.name)}</div>
-        <div class="sc">${x.mmr} · ${x.win}승 ${x.lose}패 · 보정 ${(x.adj*100).toFixed(0)}%</div>
+        <div class="nm">${raceIcon(x.race,15)} ${esc(x.name)}
+          <div class="sub">${x.win}승 ${x.lose}패 (${x.total}경기)</div>
+        </div>
+        <div class="sc">
+          ${hi("mmr", "MMR " + x.mmr)}<br>
+          <span class="muted">${hi("elo", "실력 " + x.elo)} · ${hi("adj", "보정 " + (x.adj*100).toFixed(0) + "%")}</span>
+        </div>
       </div>
     `).join("");
   } else {
@@ -1379,14 +1652,124 @@ function renderRank() {
     html += provisional.map(x => `
       <div class="rank-row prov" data-name="${esc(x.name)}">
         <div class="rk">–</div>
-        <div class="nm">${raceIcon(x.race,15)} ${esc(x.name)}</div>
-        <div class="sc">${x.total}/${MIN_GAMES}경기 · ${x.win}승 ${x.lose}패</div>
+        <div class="nm">${raceIcon(x.race,15)} ${esc(x.name)}
+          <div class="sub">${x.win}승 ${x.lose}패</div>
+        </div>
+        <div class="sc">${x.total}/${MIN_GAMES}경기</div>
       </div>
     `).join("");
   }
+  return { html, ranked };
+}
 
-  $("rankList").innerHTML = html;
+function renderRank() {
+  const { html } = rankListHtml(games, false);
+  $("rankList").innerHTML = sortBtnsHtml("sb-all") + html;
+  qsa("#rankList .sb-all").forEach(b =>
+    b.addEventListener("click", () => { sortMode = b.dataset.sort; renderRank(); renderYearTabs(); }));
   qsa("#rankList .rank-row").forEach(el =>
+    el.addEventListener("click", () => openPlayerModal(el.dataset.name)));
+  renderRaceStats();
+}
+
+/* 종족별 통계 */
+function renderRaceStats() {
+  const box = $("raceStats");
+  if (!box) return;
+  if (!games.length) { box.innerHTML = '<div class="empty">경기 데이터가 없습니다</div>'; return; }
+
+  const mmr = calcMMR(games);
+  const elo = calcElo(games);
+  const stats = buildStats(games);
+
+  const acc = { T:mk(), Z:mk(), P:mk(), R:mk() };
+  function mk() { return { n:0, win:0, lose:0, mmrSum:0, eloSum:0, played:0 }; }
+
+  players.forEach(p => {
+    const r = p.race || "R";
+    const s = stats[p.name] || { win:0, lose:0 };
+    const a = acc[r]; if (!a) return;
+    a.n++;
+    a.win += s.win; a.lose += s.lose;
+    if (s.win + s.lose > 0) {
+      a.played++;
+      a.mmrSum += (mmr[p.name] || 1000);
+      a.eloSum += (elo[p.name] || 1000);
+    }
+  });
+
+  const rows = ["T","Z","P","R"].map(r => {
+    const a = acc[r];
+    if (!a.n) return "";
+    const t = a.win + a.lose;
+    const rate = t ? (a.win/t*100).toFixed(1) + "%" : "–";
+    const avgM = a.played ? Math.round(a.mmrSum / a.played) : 1000;
+    const avgE = a.played ? Math.round(a.eloSum / a.played) : 1000;
+    return `
+      <div class="race-stat">
+        <div class="rs-head">${raceIcon(r,18)} <b>${RACE_LABEL[r]}</b> <span class="muted">${a.n}명</span></div>
+        <div class="rs-body">
+          <span>${a.win}승 ${a.lose}패 · 승률 <b>${rate}</b></span>
+          <span class="muted">평균 MMR ${avgM} · 평균 실력 ${avgE}</span>
+        </div>
+      </div>`;
+  }).join("");
+
+  box.innerHTML = rows +
+    `<p class="muted" style="margin:8px 0 0;">※ 각 선수의 <b>현재 종족</b> 기준으로 묶은 통계입니다. 종족을 바꾸면 과거 전적도 새 종족으로 집계돼요.</p>`;
+}
+
+/* 연도별 랭킹 */
+let selectedYear = null;
+
+function gameYear(g) { return (g.date || "").slice(0, 4); }
+
+function availableYears() {
+  const set = new Set();
+  games.forEach(g => { const y = gameYear(g); if (y) set.add(y); });
+  return [...set].sort((a,b) => b.localeCompare(a)); // 최신 연도 먼저
+}
+
+function renderYearTabs() {
+  const years = availableYears();
+  if (!years.length) {
+    $("yearBtns").innerHTML = "";
+    $("yearSummary").innerHTML = "";
+    $("yearRankList").innerHTML = '<div class="empty">경기 데이터가 없습니다</div>';
+    return;
+  }
+  if (!selectedYear || !years.includes(selectedYear)) selectedYear = years[0];
+
+  $("yearBtns").innerHTML = years.map(y =>
+    `<button class="${y===selectedYear?"on":""}" data-year="${y}">${y}년</button>`
+  ).join("");
+  qsa("#yearBtns button").forEach(b =>
+    b.addEventListener("click", () => { selectedYear = b.dataset.year; renderYearTabs(); }));
+
+  renderYearRank(selectedYear);
+}
+
+function renderYearRank(year) {
+  const gs = games.filter(g => gameYear(g) === year);
+  const { html, ranked } = rankListHtml(gs, true);
+
+  const thisYear = String(new Date().getFullYear());
+  const isPast = year < thisYear;
+  const champ = ranked && ranked.length ? ranked[0] : null;
+
+  $("yearSummary").innerHTML = `
+    <div class="year-champ">
+      <div class="ct">${isPast ? "🏆 " + year + "년 최종 챔피언 (확정)" : "🏆 " + year + "년 현재 1위 (진행 중)"}</div>
+      <div>${champ
+        ? `${raceIcon(champ.race,16)} <b>${esc(champ.name)}</b> · MMR ${champ.mmr} · ${champ.win}승 ${champ.lose}패`
+        : `<span class="muted">${MIN_GAMES}경기 이상 뛴 선수가 없어 순위 미확정</span>`}</div>
+      <div class="year-locked">${year}년 경기 <b>${gs.length}</b>판 기준 · 모두 1000점에서 시작해 이 해 경기만 반영${isPast ? " · 지난 연도라 기록 고정" : ""}</div>
+    </div>
+  `;
+  $("yearRankList").innerHTML = sortBtnsHtml("sb-year") + html;
+  qsa("#yearRankList .sb-year").forEach(b =>
+    b.addEventListener("click", () => { sortMode = b.dataset.sort; renderYearTabs(); renderRank(); }));
+  qsa("#yearRankList .rank-row").forEach(el =>
     el.addEventListener("click", () => openPlayerModal(el.dataset.name)));
 }
 
