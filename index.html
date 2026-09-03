@@ -45,6 +45,15 @@
   .team-col h4 { margin: 0 0 6px 0; font-size: 13px; }
   .team-col .tp { background: #fff; padding: 6px 10px; margin: 3px 0; border-radius: 4px;
                   font-size: 13px; }
+  /* 여러 팀(3대3대3대3 등) 표시용 */
+  .multi-team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+  .multi-team-grid .team-col h4 { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .multi-team-grid .team-col .tp { display: flex; align-items: center; gap: 4px; }
+  /* 팀 인원 선택 버튼 */
+  .size-sel { display: flex; gap: 5px; margin: 6px 0 2px; }
+  .size-sel button { width: auto; flex: 1; padding: 8px 4px; font-size: 13px; margin: 0;
+                     background: #eee; color: #555; border-radius: 6px; font-weight: 600; }
+  .size-sel button.on { background: #ff6600; color: #fff; }
 
   .chip-section { padding: 10px; border-radius: 8px; margin: 6px 0; min-height: 50px; }
   .chip-section.none { background: #f7f7f7; border: 1px dashed #ccc; }
@@ -332,8 +341,10 @@
     </div>
     <div class="card">
       <h3>🎯 팀 구성 도우미</h3>
-      <p class="muted" style="margin:0 0 8px 0;">참가할 선수를 골라 팀을 추천받으세요 · <b>직전 경기 같은 팀이었던 사람끼리는 최대한 안 붙게</b> 섞습니다 (저장 안 됨)</p>
+      <p class="muted" style="margin:0 0 8px 0;">참가할 선수를 고르고 <b>한 팀 인원</b>을 정하면 MMR에 맞춰 팀을 나눠줍니다 · 인원이 많으면 <b>3대3대3대3처럼 여러 팀</b>으로 나눠요 · 2팀일 땐 <b>직전 동료</b>도 피해서 섞습니다 (저장 안 됨)</p>
       <div id="helperSelect" class="checklist"></div>
+      <div class="muted" style="margin:10px 0 2px;">한 팀 인원 (스타는 최대 4명)</div>
+      <div id="helperSizeSel" class="size-sel"></div>
       <div class="flex" style="margin-top:8px;">
         <button id="btnHelperBalance" class="secondary">⚖️ MMR 균형</button>
         <button id="btnHelperRandom" class="secondary">🎲 랜덤</button>
@@ -803,6 +814,17 @@ function renderHelperSelect() {
     `<label><input type="checkbox" value="${esc(p.name)}"> ${esc(p.name)}</label>`
   ).join("");
 }
+/* 한 팀 인원 선택 (2 / 3 / 4명) — 기본 4명 */
+let helperTeamSize = 4;
+function renderHelperSize() {
+  $("helperSizeSel").innerHTML = [2,3,4].map(s =>
+    `<button class="${s===helperTeamSize?"on":""}" data-size="${s}">${s}명씩</button>`
+  ).join("");
+  qsa("#helperSizeSel button").forEach(b =>
+    b.addEventListener("click", () => { helperTeamSize = +b.dataset.size; renderHelperSize(); }));
+}
+renderHelperSize();
+
 $("btnHelperBalance").addEventListener("click", () => buildHelperTeams("balance"));
 $("btnHelperRandom").addEventListener("click", () => buildHelperTeams("random"));
 
@@ -832,9 +854,27 @@ function countRepeatPairs(A, B, map) {
 
 function buildHelperTeams(mode) {
   const selected = qsa("#helperSelect input:checked").map(i => i.value);
-  if (selected.length < 2) return toast("2명 이상 선택하세요", true);
+  if (selected.length < 4) return toast("4명 이상 선택하세요", true);
 
   const mmr = calcMMR(games);
+  const n = selected.length;
+  const size = helperTeamSize;                 // 한 팀 최대 인원 (2/3/4)
+  // 한 팀이 size명을 넘지 않도록 필요한 팀 수 (최소 2팀)
+  const numTeams = Math.max(2, Math.ceil(n / size));
+  // 인원을 팀 수만큼 최대한 고르게 나눈 정원 (앞쪽 팀이 1명씩 더 받음)
+  const baseCap = Math.floor(n / numTeams);
+  const extra = n % numTeams;
+  const caps = Array.from({ length: numTeams }, (_, i) => baseCap + (i < extra ? 1 : 0));
+
+  if (numTeams === 2) {
+    buildTwoTeams(selected, mode, mmr);        // 기존 방식(전수탐색 + 직전 동료 회피) 그대로
+  } else {
+    buildMultiTeams(selected, mode, mmr, caps);
+  }
+}
+
+/* 2팀(A/B) 구성 — 기존 로직 유지: 전수 탐색으로 직전 동료 중복 최소화 */
+function buildTwoTeams(selected, mode, mmr) {
   const last = lastGameTeams();
   const map = last ? last.map : {};
   const n = selected.length;
@@ -887,21 +927,119 @@ function buildHelperTeams(mode) {
   }
 
   const tag = n2 => map[n2] ? `<span class="muted"> (직전 ${map[n2]})</span>` : "";
+  const raceOf = nm => { const p = players.find(x => x.name === nm); return raceIcon((p && p.race) || "R", 14); };
 
   $("helperResult").innerHTML = `
     ${note}
     <div class="team-grid">
       <div class="team-col A">
         <h4>A팀 (${A.length}명)${mode==="balance"?` · 합계 ${Math.round(sA)}`:""}</h4>
-        ${A.map(x => `<div class="tp">${esc(x)}${tag(x)}</div>`).join("")}
+        ${A.map(x => `<div class="tp">${raceOf(x)} ${esc(x)}${tag(x)}</div>`).join("")}
       </div>
       <div class="team-col B">
         <h4>B팀 (${B.length}명)${mode==="balance"?` · 합계 ${Math.round(sB)}`:""}</h4>
-        ${B.map(x => `<div class="tp">${esc(x)}${tag(x)}</div>`).join("")}
+        ${B.map(x => `<div class="tp">${raceOf(x)} ${esc(x)}${tag(x)}</div>`).join("")}
       </div>
     </div>
     ${mode==="balance" ? `<p class="muted" style="text-align:center;">MMR 격차 ${Math.round(diff)}점</p>` : ""}
     <p class="muted" style="text-align:center;">경기입력 탭에서 이 구성대로 배정해 주세요 · 버튼을 다시 누르면 다른 조합이 나옵니다</p>
+  `;
+}
+
+/* 여러 팀(3팀 이상) 구성 — MMR 합이 최대한 비슷하도록 나눔 */
+function buildMultiTeams(selected, mode, mmr, caps) {
+  const numTeams = caps.length;
+  const val = nm => mmr[nm] || 1000;
+  const last = lastGameTeams();
+  const map = last ? last.map : {};
+
+  const shuffle = arr => {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  };
+
+  // 직전 경기 동료가 같은 팀에 다시 묶인 쌍 수
+  const repeatPairs = teams => {
+    let rep = 0;
+    teams.forEach(team => {
+      for (let i = 0; i < team.length; i++)
+        for (let j = i + 1; j < team.length; j++)
+          if (map[team[i]] && map[team[i]] === map[team[j]]) rep++;
+    });
+    return rep;
+  };
+
+  // 주어진 순서대로 '현재 합이 가장 낮고 자리가 남은 팀'에 한 명씩 채움 (균형용)
+  const greedyByOrder = order => {
+    const teams = caps.map(() => []);
+    const sums = caps.map(() => 0);
+    order.forEach(p => {
+      let bi = -1, bs = Infinity;
+      for (let i = 0; i < numTeams; i++) {
+        if (teams[i].length >= caps[i]) continue;
+        if (sums[i] < bs) { bs = sums[i]; bi = i; }
+      }
+      teams[bi].push(p); sums[bi] += val(p);
+    });
+    const spread = Math.max(...sums) - Math.min(...sums);
+    return { teams, sums, spread, rep: repeatPairs(teams) };
+  };
+
+  let pick;
+  if (mode === "random") {
+    // 무작위: 섞어서 정원대로 순서대로 자르기 (진짜 랜덤)
+    const order = shuffle([...selected]);
+    const teams = [], sums = [];
+    let pos = 0;
+    caps.forEach(cap => {
+      const t = order.slice(pos, pos + cap); pos += cap;
+      teams.push(t);
+      sums.push(t.reduce((s,x) => s + val(x), 0));
+    });
+    pick = { teams, sums, spread: Math.max(...sums) - Math.min(...sums), rep: repeatPairs(teams) };
+  } else {
+    // 균형: 여러 번 시도해 팀 간 합 차이가 가장 작은 후보들 중에서 고름
+    const cands = [greedyByOrder([...selected].sort((a,b) => val(b) - val(a)))]; // 강한 선수부터(기본값)
+    for (let t = 0; t < 800; t++) cands.push(greedyByOrder(shuffle([...selected])));
+    const minSpread = Math.min(...cands.map(c => c.spread));
+    let near = cands.filter(c => c.spread <= minSpread + 40);
+    const minRep = Math.min(...near.map(c => c.rep));
+    near = near.filter(c => c.rep === minRep);
+    pick = near[Math.floor(Math.random() * near.length)];
+  }
+
+  renderMultiResult(pick, mode, map);
+}
+
+/* 여러 팀 결과 화면 */
+function renderMultiResult(pick, mode, map) {
+  const { teams, sums, spread } = pick;
+  const colors = ["#2980b9", "#c0392b", "#27ae60", "#8e44ad", "#e67e22", "#16a085"];
+  const tints  = ["#e3f2fd", "#fbe9e7", "#eafaf1", "#f3e9fb", "#fdf1e6", "#e6f7f4"];
+
+  const note = mode === "balance"
+    ? `<div class="mix-note ok">✅ MMR 합계가 최대한 비슷하도록 <b>${teams.length}팀</b>으로 나눴어요 · 팀 간 합계 차이 <b>${Math.round(spread)}점</b></div>`
+    : `<div class="mix-note warn">🎲 무작위로 <b>${teams.length}팀</b>을 나눴어요 (버튼을 다시 누르면 다른 조합)</div>`;
+
+  const tag = nm => map[nm] ? `<span class="muted"> (직전 ${map[nm]})</span>` : "";
+  const raceOf = nm => { const p = players.find(x => x.name === nm); return raceIcon((p && p.race) || "R", 14); };
+
+  const cards = teams.map((team, i) => {
+    const c = colors[i % colors.length];
+    const bg = tints[i % tints.length];
+    const head = `${i+1}팀 (${team.length}명)` + (mode === "balance" ? ` · 합계 ${Math.round(sums[i])}` : "");
+    const body = team.map(x => `<div class="tp">${raceOf(x)} ${esc(x)}${tag(x)}</div>`).join("");
+    return `<div class="team-col" style="background:${bg}; border-left:4px solid ${c};">
+      <h4 style="color:${c};">${head}</h4>${body}</div>`;
+  }).join("");
+
+  $("helperResult").innerHTML = `
+    ${note}
+    <div class="multi-team-grid">${cards}</div>
+    <p class="muted" style="text-align:center;">저장 안 됨 · 경기입력 탭에서 이 구성대로 배정하세요 · 버튼을 다시 누르면 다른 조합</p>
   `;
 }
 
