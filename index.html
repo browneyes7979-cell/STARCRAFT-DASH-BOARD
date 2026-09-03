@@ -66,6 +66,9 @@
           background: #fff; font-size: 13px; cursor: pointer; width: auto; margin: 0;
           color: #333; font-weight: 500; touch-action: manipulation; user-select: none; }
   .chip:active { transform: scale(0.94); }
+  .chip .chip-race { display: inline-flex; align-items: center; padding: 3px 5px;
+                     margin: -3px 2px -3px -7px; border-radius: 12px; vertical-align: middle; }
+  .chip .chip-race:active { background: rgba(0,0,0,.15); }
   .chip.A { background: #2980b9; color: #fff; border-color: #2980b9; }
   .chip.B { background: #c0392b; color: #fff; border-color: #c0392b; }
 
@@ -335,7 +338,7 @@
     </div>
     <div class="card">
       <h3>선수 목록 <span class="muted" id="playerCount"></span></h3>
-      <p class="muted" style="margin:0 0 8px 0;">이름을 누르면 상세 통계 · 종족 버튼을 누르면 종족 선택</p>
+      <p class="muted" style="margin:0 0 8px 0;">이름을 누르면 상세 통계 · <b>종족을 누를 때마다</b> 테란→저그→프로토스→랜덤 순으로 바뀝니다</p>
       <div id="raceLegend" class="race-legend"></div>
       <div id="playerList"></div>
     </div>
@@ -364,7 +367,7 @@
       <input type="date" id="date">
 
       <h4>팀 배정 <span class="muted" id="assignHint"></span></h4>
-      <p class="muted" style="margin:0 0 6px 0; font-size:12px;">이름을 누르면 미참여 → A팀 → B팀 순환 · <b>길게 누르면(약 0.5초) 종족 변경</b></p>
+      <p class="muted" style="margin:0 0 6px 0; font-size:12px;">이름을 누르면 미참여 → A팀 → B팀 순환 · <b>종족 아이콘을 누르면 이 경기 종족만 바뀝니다</b> (주종족·과거 기록은 그대로)</p>
       <div id="assignList"></div>
 
       <div class="tools-row">
@@ -663,6 +666,7 @@ qsa(".tabs button").forEach(btn => {
 let players = [];
 let games = [];
 let assign = {};
+let assignRace = {};   // 이 입력 화면의 '경기별 종족' (비어있으면 주종족 사용) — 주종족·과거 기록은 안 바뀜
 let editingGameId = null;
 let currentModalPlayer = null;
 
@@ -682,6 +686,12 @@ function bootData() {
     renderPlayers();
     renderHelperSelect();
     renderAssignChips();
+    // 선수 정보(특히 종족)가 바뀌면 랭킹·연도별·동호회·이 날 경기까지 함께 갱신
+    renderRank();
+    renderYearTabs();
+    renderClubStats();
+    renderDayGames();
+    if (currentModalPlayer) openPlayerModal(currentModalPlayer);
   }, err => toast("선수 로딩 실패: " + err.message, true));
 
   db.ref("games").on("value", snap => {
@@ -762,7 +772,7 @@ function renderPlayers() {
   qsa("#playerList .name").forEach(el =>
     el.addEventListener("click", () => openPlayerModal(el.dataset.name)));
   qsa("#playerList .race-btn").forEach(el =>
-    el.addEventListener("click", () => openRacePicker(el.dataset.id)));
+    el.addEventListener("click", () => cyclePlayerRace(el.dataset.id)));
   qsa("#playerList .del").forEach(el =>
     el.addEventListener("click", () => deletePlayer(el.dataset.id, el.dataset.name)));
 }
@@ -793,6 +803,16 @@ function setPlayerRace(id, race) {
   // 레거시 문자열 데이터도 안전하게 객체로 바꿔 저장
   db.ref("players/" + id).update({ name: p.name, race })
     .then(() => toast(`${p.name} → ${RACE_LABEL[race]}`))
+    .catch(err => toast("종족 변경 실패: " + err.message, true));
+}
+
+/* 선수관리: 종족 버튼을 누를 때마다 테란→저그→프로토스→랜덤 순으로 바로 변경 */
+function cyclePlayerRace(id) {
+  const p = players.find(x => x.id === id);
+  if (!p) return;
+  const next = RACE_CYCLE[p.race || "R"] || "T";   // R→T→Z→P→R
+  db.ref("players/" + id).update({ name: p.name, race: next })
+    .then(() => toast(`${p.name} → ${RACE_LABEL[next]}`))
     .catch(err => toast("종족 변경 실패: " + err.message, true));
 }
 
@@ -1044,6 +1064,11 @@ function renderMultiResult(pick, mode, map) {
 }
 
 /* 칩 배정 */
+// 이 경기에서 쓸 종족: 탭으로 바꾼 값(assignRace) 우선, 없으면 선수 주종족.
+// (주종족과 이미 저장된 과거 경기 기록은 절대 건드리지 않음)
+function gameRaceOf(name) {
+  return assignRace[name] || (players.find(x => x.name === name)?.race) || "R";
+}
 function renderAssignChips() {
   if (!players.length) {
     $("assignList").innerHTML = '<div class="empty">먼저 선수를 등록하세요</div>';
@@ -1062,9 +1087,8 @@ function renderAssignChips() {
   });
 
   const chipHtml = (name, team) => {
-    const p = players.find(x => x.name === name);
-    const race = (p && p.race) || "R";
-    return `<button class="chip ${team}" data-name="${esc(name)}">${raceIcon(race,16)}${esc(name)}</button>`;
+    const race = gameRaceOf(name);
+    return `<button class="chip ${team}" data-name="${esc(name)}"><span class="chip-race" title="이 경기 종족 바꾸기">${raceIcon(race,16)}</span>${esc(name)}</button>`;
   };
 
   $("assignList").innerHTML = `
@@ -1089,39 +1113,20 @@ function renderAssignChips() {
   `;
 
   qsa("#assignList .chip").forEach(c => {
-    let timer = null, longFired = false;
-
-    const startPress = () => {
-      longFired = false;
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        longFired = true;                     // 길게 누름 → 종족 변경
-        const p = players.find(x => x.name === c.dataset.name);
-        if (p) {
-          if (navigator.vibrate) navigator.vibrate(30);
-          openRacePicker(p.id);               // 1탭으로 종족 선택 (순환 아님)
-        }
-      }, 500);
-    };
-    const cancelPress = () => { clearTimeout(timer); timer = null; };
-
-    c.addEventListener("touchstart", startPress, { passive: true });
-    c.addEventListener("touchend", cancelPress);
-    c.addEventListener("touchmove", cancelPress);
-    c.addEventListener("touchcancel", cancelPress);
-    c.addEventListener("mousedown", startPress);
-    c.addEventListener("mouseup", cancelPress);
-    c.addEventListener("mouseleave", cancelPress);
-    c.addEventListener("contextmenu", e => e.preventDefault()); // 길게 눌러도 메뉴 안 뜨게
-
-    c.addEventListener("click", () => {
-      cancelPress();
-      if (longFired) { longFired = false; return; }  // 방금 종족을 바꿨으면 팀은 그대로
+    c.addEventListener("click", (e) => {
       const name = c.dataset.name;
+      // 종족 아이콘을 누르면 → 이 경기 종족만 순환 (팀·주종족·과거 기록은 그대로)
+      if (e.target.closest(".chip-race")) {
+        assignRace[name] = RACE_CYCLE[gameRaceOf(name)] || "T";  // T→Z→P→R→T
+        renderAssignChips();
+        return;
+      }
+      // 그 외 영역을 누르면 → 팀 순환 (미참여 → A → B)
       const cur = assign[name] || "";
       assign[name] = cur === "" ? "A" : cur === "A" ? "B" : "";
       renderAssignChips();
     });
+    c.addEventListener("contextmenu", e => e.preventDefault());
   });
 
   renderSummary();
@@ -1144,6 +1149,7 @@ function renderSummary() {
 
 $("btnClearAssign").addEventListener("click", () => {
   assign = {};
+  assignRace = {};
   renderAssignChips();
 });
 
@@ -1163,8 +1169,10 @@ $("btnCopyLast").addEventListener("click", () => {
   if (!list.length) return toast("이 날 복사할 경기가 없습니다", true);
   const last = list[0];
   assign = {};
+  assignRace = {};
   (last.teams.A||[]).forEach(n => assign[n] = "A");
   (last.teams.B||[]).forEach(n => assign[n] = "B");
+  if (last.races) Object.keys(last.races).forEach(n => assignRace[n] = last.races[n]);
   renderAssignChips();
   toast("직전 경기 배정을 복사했어요");
 });
@@ -1176,8 +1184,10 @@ function startEditGame(gameId) {
   editingGameId = gameId;
   $("date").value = g.date;
   assign = {};
+  assignRace = {};
   (g.teams.A||[]).forEach(n => assign[n] = "A");
   (g.teams.B||[]).forEach(n => assign[n] = "B");
+  if (g.races) Object.keys(g.races).forEach(n => assignRace[n] = g.races[n]); // 그 경기의 종족 불러오기
   renderAssignChips();
   renderEditModeUI(g);
 
@@ -1189,6 +1199,7 @@ function startEditGame(gameId) {
 function cancelEdit() {
   editingGameId = null;
   assign = {};
+  assignRace = {};
   renderAssignChips();
   renderEditModeUI();
 }
@@ -1217,11 +1228,10 @@ function saveGame(winner) {
   if (!A.length || !B.length) return toast("A/B 양 팀에 선수를 배정하세요", true);
   if (!$("date").value) return toast("날짜를 선택하세요", true);
 
-  // 경기 시점의 종족 스냅샷 저장
+  // 이 경기에서 고른 종족을 그대로 저장 (탭으로 바꾼 값 우선, 아니면 주종족)
   const races = {};
   [...A, ...B].forEach(n => {
-    const p = players.find(x => x.name === n);
-    races[n] = (p && p.race) || "R";
+    races[n] = gameRaceOf(n);
   });
 
   const btnA = $("btnWinA"), btnB = $("btnWinB");
